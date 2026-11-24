@@ -59,6 +59,22 @@ class Episode(Base):
     start_date: Mapped[date] = mapped_column(Date, default=date.today)
     status: Mapped[str] = mapped_column(String(10), default="active")  # active | closed
 
+    consultations: Mapped[list["Consultation"]] = relationship(cascade="all, delete-orphan")
+
+
+class Consultation(Base):
+    __tablename__ = "consultations"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    episode_id: Mapped[str] = mapped_column(ForeignKey("episodes.id", ondelete="CASCADE"), index=True)
+    consent_given: Mapped[bool] = mapped_column(Boolean, default=False)
+    language: Mapped[str] = mapped_column(String(10), default="")
+    duration_sec: Mapped[float] = mapped_column(default=0.0)
+    # [{"start": 12.3, "end": 15.8, "text": "..."}] — timestamps power the evidence links
+    transcript: Mapped[list] = mapped_column(JSON, default=list)
+    summary: Mapped[str] = mapped_column(Text, default="")  # filled in week 4
+    audio_deleted: Mapped[bool] = mapped_column(Boolean, default=True)
+    recorded_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"

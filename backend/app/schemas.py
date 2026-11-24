@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -80,6 +80,25 @@ class EpisodeIn(BaseModel):
     category: str = Field(min_length=1)
     issue_description: str = ""
     start_date: date | None = None
+
+
+class Segment(BaseModel):
+    start: float
+    end: float
+    text: str
+
+
+class ConsultationOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    episode_id: str
+    consent_given: bool
+    language: str
+    duration_sec: float
+    transcript: list[Segment]
+    summary: str
+    audio_deleted: bool
+    recorded_at: datetime
 
 
 class EpisodeOut(BaseModel):
