@@ -16,6 +16,7 @@ ConsultKeeper records a doctor's consultation and summarises it. It reads the ha
 | 6 | [06-build-plan-step-by-step.md](06-build-plan-step-by-step.md) | The 12-week build, step by step, with checklists |
 | 7 | [07-ios-and-free-setup.md](07-ios-and-free-setup.md) | iOS-first plan at ₹0, HealthKit workarounds, Mac setup |
 | 8 | [08-testing-and-evaluation.md](08-testing-and-evaluation.md) | Dataset, metrics, how to prove it works |
+| 9 | [09-health-signals-spec.md](09-health-signals-spec.md) | Early-warning layer: data, formulas, sources, validation results |
 
 ## Key decisions at a glance
 

@@ -4,7 +4,8 @@ import {
 import { arrowForward, chevronForward, mic, notificationsOutline } from 'ionicons/icons';
 import { useState } from 'react';
 import HelpButton from '../components/HelpButton';
-import { api, Blueprint, DayLog, Episode, Profile } from '../services/api';
+import { api, Blueprint, DayLog, Episode, Profile, Signals } from '../services/api';
+import SignalCard from '../components/SignalCard';
 import TodayTracker from '../components/TodayTracker';
 import WelcomeSplash, { tipFor } from '../ui/WelcomeSplash';
 import { Item, monogram, Pressable, Stagger, useEnterKey } from '../ui/motion';
@@ -22,6 +23,7 @@ export default function Home() {
   const [bp, setBp] = useState<Blueprint | null>(null);
   const [log, setLog] = useState<DayLog | null>(null);
   const [splash, setSplash] = useState(false);
+  const [signals, setSignals] = useState<Signals | null>(null);
   const k = useEnterKey();
   const router = useIonRouter();
 
@@ -31,6 +33,7 @@ export default function Home() {
       if (!p.onboarded) { router.push('/onboarding', 'root', 'replace'); return; }
       api<Blueprint>('/wellness/blueprint').then(setBp).catch(() => {});
       api<DayLog>('/wellness/today').then(setLog).catch(() => {});
+      api<Signals>('/signals/today').then(setSignals).catch(() => {});
       try {
         if (!sessionStorage.getItem('ck_welcomed')) { setSplash(true); sessionStorage.setItem('ck_welcomed', '1'); }
       } catch { /* storage unavailable */ }
@@ -56,6 +59,10 @@ export default function Home() {
             <p className="muted" style={{ margin: '0 4px 4px', fontWeight: 500 }}>{today}</p>
             <h1 className="h1" style={{ margin: '0 4px 20px' }}>{greeting()}{first ? `, ${first}` : ''}.</h1>
           </Item>
+
+          {signals && (
+            <Item><SignalCard s={signals} onOpen={() => router.push('/timeline')} /></Item>
+          )}
 
           {bp && log && (
             <Item>

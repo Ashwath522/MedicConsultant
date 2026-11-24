@@ -86,3 +86,12 @@ export interface Blueprint {
   active_minutes_week: number; checkups: Checkup[]; disclaimer: string;
 }
 export interface DayLog { day: string; water_ml: number; steps: number; sleep_hours: number; mood: string }
+
+export type SignalLevel = 'no_data' | 'learning' | 'normal' | 'watch' | 'check';
+export interface SignalPoint { day: string; rhr: number | null; baseline: number | null; spread: number | null; temp_dev: number | null; hrv: number | null; level: SignalLevel }
+export interface Signals {
+  day?: string; level: SignalLevel; reasons?: string[]; message: string; tags?: string[]; stale?: boolean;
+  baseline?: { rhr: number | null; rhr_spread: number | null; nights: number; needed: number };
+  latest?: { rhr: number | null; hrv: number | null; temp_dev: number | null; temp_abs: number | null; resp: number | null; steps: number | null };
+  series: SignalPoint[];
+}

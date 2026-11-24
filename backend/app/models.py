@@ -44,6 +44,7 @@ class User(Base):
     contacts: Mapped[list["Contact"]] = relationship(cascade="all, delete-orphan")
     episodes: Mapped[list["Episode"]] = relationship(cascade="all, delete-orphan")
     logs: Mapped[list["DailyLog"]] = relationship(cascade="all, delete-orphan")
+    vitals: Mapped[list["NightlyVitals"]] = relationship(cascade="all, delete-orphan")
 
 
 class Contact(Base):
@@ -95,6 +96,26 @@ class DailyLog(Base):
     steps: Mapped[int] = mapped_column(Integer, default=0)
     sleep_hours: Mapped[float] = mapped_column(Float, default=0.0)
     mood: Mapped[str] = mapped_column(String(10), default="")  # great|good|okay|low
+
+
+class NightlyVitals(Base):
+    """One row per user per night: inputs for the early-warning engine (spec 09)."""
+    __tablename__ = "nightly_vitals"
+    __table_args__ = (UniqueConstraint("user_id", "day"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    day: Mapped[date] = mapped_column(Date, index=True)  # the date the night ENDED (morning)
+    rhr: Mapped[float | None] = mapped_column(Float, nullable=True)
+    hrv: Mapped[float | None] = mapped_column(Float, nullable=True)
+    hrv_type: Mapped[str | None] = mapped_column(String(8), nullable=True)  # sdnn | rmssd
+    temp_dev: Mapped[float | None] = mapped_column(Float, nullable=True)
+    temp_abs: Mapped[float | None] = mapped_column(Float, nullable=True)
+    resp: Mapped[float | None] = mapped_column(Float, nullable=True)
+    spo2: Mapped[float | None] = mapped_column(Float, nullable=True)
+    steps: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    sleep_h: Mapped[float | None] = mapped_column(Float, nullable=True)
+    tags: Mapped[list] = mapped_column(JSON, default=list)
+    source: Mapped[str] = mapped_column(String(20), default="manual")  # shortcuts | manual | demo | health_connect
 
 
 class AuditLog(Base):
