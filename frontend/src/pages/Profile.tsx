@@ -3,7 +3,7 @@ import {
   IonTitle, IonToolbar, useIonRouter, useIonToast, useIonViewWillEnter,
 } from '@ionic/react';
 import { motion } from 'framer-motion';
-import { bedOutline, bodyOutline, cafeOutline, chevronForward, moonOutline, peopleOutline, pulseOutline, restaurantOutline, sunnyOutline } from 'ionicons/icons';
+import { bedOutline, bodyOutline, flaskOutline, cafeOutline, chevronForward, moonOutline, peopleOutline, pulseOutline, restaurantOutline, sunnyOutline } from 'ionicons/icons';
 import { useState } from 'react';
 import { api, Profile as P, setToken } from '../services/api';
 import { Item, Pressable, Stagger, useEnterKey } from '../ui/motion';
@@ -88,6 +88,16 @@ export default function Profile() {
                   <div className="muted" style={{ fontSize: 14 }}>
                     {p.sex ? `${p.sex === 'other' ? '' : p.sex[0].toUpperCase() + p.sex.slice(1) + ' · '}${p.age ?? '–'} yrs · ${p.height_cm ?? '–'} cm · ${p.weight_kg ?? '–'} kg` : 'Not set up yet'}
                   </div>
+                </div>
+                <IonIcon icon={chevronForward} style={{ color: 'var(--ck-faint)' }} />
+              </div>
+            </Pressable>
+            <Pressable className="card tap" onClick={() => router.push('/labs')}>
+              <div className="row">
+                <div className="mono"><IonIcon icon={flaskOutline} /></div>
+                <div className="grow">
+                  <div style={{ fontWeight: 650 }}>Lab reports</div>
+                  <div className="muted" style={{ fontSize: 14 }}>Blood tests over time</div>
                 </div>
                 <IonIcon icon={chevronForward} style={{ color: 'var(--ck-faint)' }} />
               </div>

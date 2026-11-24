@@ -62,3 +62,13 @@ def test_pattern_names_the_higher_group():
     pats = build(30, today, vit, {}, 7, 8000)["patterns"]
     sleep = [p for p in pats if p["title"].startswith("Sleep")][0]
     assert sleep["title"] == "Sleep is higher on less active days" and sleep["detail"].startswith("8")
+
+
+def test_extra_graphs_vo2_weekdays_scatter_calendar():
+    today = date(2026, 3, 1)
+    vit = {today - timedelta(days=i): {"rhr": 60 + (i % 5), "hrv": 60 - 2 * (i % 5), "hrv_type": "rmssd", "sleep_h": 7, "steps": 8000} for i in range(60)}
+    out = build(30, today, vit, {}, 7, 8000, age=30)
+    assert abs(out["summary"]["vo2max"]["max"] - round(15.3 * 187 / 60, 1)) < 0.05      # Uth formula
+    assert len(out["weekdays"]["rhr"]) == 7 and out["scatter"]["r"] < -0.9               # HRV falls as RHR rises
+    assert len(out["calendar"]) == 90 and out["calendar"][-1]["level"] in ("normal", "watch", "check")
+    assert out["goals"] == {"sleep_h": 7, "steps": 8000}

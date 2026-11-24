@@ -83,7 +83,7 @@ export interface Blueprint {
   life_stage: string;
   bmi: { value: number; category: string; healthy_range_kg: [number, number]; scale: string };
   bmr: number; calories: number; water_ml: number; sleep_hours: [number, number]; steps: number;
-  active_minutes_week: number; checkups: Checkup[]; disclaimer: string;
+  active_minutes_week: number; checkups: (Checkup & { status?: 'done' | 'due' | 'not_recorded'; last_done?: string | null; next_due?: string | null })[]; disclaimer: string;
 }
 export interface DayLog { day: string; water_ml: number; steps: number; sleep_hours: number; mood: string }
 
@@ -105,4 +105,19 @@ export type TrendRow = { day: string } & Record<string, number | null | string>;
 export interface Trends {
   days: number; series: TrendRow[]; summary: Record<string, MetricSummary>;
   patterns: { title: string; detail: string; good: boolean }[];
+  weekdays: Record<string, (number | null)[]>;
+  scatter: { points: { rhr: number; hrv: number }[]; r: number | null };
+  calendar: { day: string; recovery: number | null; level: SignalLevel | null }[];
+  goals: { sleep_h: number; steps: number };
 }
+
+export interface LabResultT {
+  key: string; name: string; value: number; unit: string; ref_low: number | null; ref_high: number | null;
+  range_source: 'report' | 'typical'; flag: 'low' | 'normal' | 'high'; group: string; printed_name?: string;
+}
+export interface LabReportT { id: string; taken_on: string; lab_name: string; method: string; count: number; flagged: number; results: LabResultT[] }
+export interface LabTrend extends LabResultT { points: { day: string; value: number; flag: string }[]; change: number | null }
+
+/** "13–17", "< 200", "> 40" — how a reference range reads on a report. */
+export const rangeText = (lo: number | null, hi: number | null) =>
+  lo != null && hi != null ? `${lo}–${hi}` : hi != null ? `< ${hi}` : lo != null ? `> ${lo}` : 'no range';

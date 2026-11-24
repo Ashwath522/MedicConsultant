@@ -102,7 +102,12 @@ export default function BlueprintView({ bp, k }: { bp: Blueprint; k?: number }) 
               <div style={{ fontWeight: 650 }}>{c.name}</div>
               <div className="muted" style={{ fontSize: 14 }}>{c.why}</div>
             </div>
-            <span className="chip" style={{ whiteSpace: 'nowrap' }}>{c.how_often}</span>
+            <div style={{ textAlign: 'right' }}>
+              <span className={`chip ${c.status === 'done' ? 'on' : ''}`} style={{ whiteSpace: 'nowrap' }}>
+                {c.status === 'done' ? '✓ Done' : c.status === 'due' ? 'Due now' : c.how_often}
+              </span>
+              {c.last_done && <div className="muted" style={{ fontSize: 11, marginTop: 4 }}>last {c.last_done}{c.next_due ? ` · next ${c.next_due}` : ''}</div>}
+            </div>
           </div>
         </motion.div>
       ))}

@@ -45,6 +45,7 @@ class User(Base):
     episodes: Mapped[list["Episode"]] = relationship(cascade="all, delete-orphan")
     logs: Mapped[list["DailyLog"]] = relationship(cascade="all, delete-orphan")
     vitals: Mapped[list["NightlyVitals"]] = relationship(cascade="all, delete-orphan")
+    lab_reports: Mapped[list["LabReport"]] = relationship(cascade="all, delete-orphan")
 
 
 class Contact(Base):
@@ -116,6 +117,33 @@ class NightlyVitals(Base):
     sleep_h: Mapped[float | None] = mapped_column(Float, nullable=True)
     tags: Mapped[list] = mapped_column(JSON, default=list)
     source: Mapped[str] = mapped_column(String(20), default="manual")  # shortcuts | manual | demo | health_connect
+
+
+class LabReport(Base):
+    __tablename__ = "lab_reports"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    taken_on: Mapped[date] = mapped_column(Date, index=True)
+    lab_name: Mapped[str] = mapped_column(String(120), default="")
+    method: Mapped[str] = mapped_column(String(10), default="text")  # pdf | text | vision | manual
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+    results: Mapped[list["LabResult"]] = relationship(cascade="all, delete-orphan")
+
+
+class LabResult(Base):
+    __tablename__ = "lab_results"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    report_id: Mapped[str] = mapped_column(ForeignKey("lab_reports.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[str] = mapped_column(String(36), index=True)
+    taken_on: Mapped[date] = mapped_column(Date, index=True)
+    key: Mapped[str] = mapped_column(String(40), index=True)
+    name: Mapped[str] = mapped_column(String(80))
+    value: Mapped[float] = mapped_column(Float)
+    unit: Mapped[str] = mapped_column(String(20), default="")
+    ref_low: Mapped[float | None] = mapped_column(Float, nullable=True)
+    ref_high: Mapped[float | None] = mapped_column(Float, nullable=True)
+    range_source: Mapped[str] = mapped_column(String(10), default="report")  # report | typical
+    flag: Mapped[str] = mapped_column(String(8), default="normal")  # low | normal | high
 
 
 class AuditLog(Base):

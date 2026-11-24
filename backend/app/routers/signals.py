@@ -10,6 +10,7 @@ from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import audit, current_user
 from app.models import DailyLog, NightlyVitals, User
+from app.routers.labs import latest_by_key
 from app.signals import trends as trends_mod
 from app.wellness.targets import sleep_hours as sleep_target_for, steps as steps_goal_for
 from app.signals.engine import BENIGN_TAGS, Night, evaluate
@@ -101,6 +102,17 @@ def signals_today(user: User = Depends(current_user), db: Session = Depends(get_
         return {"level": "no_data", "message": "No body signals yet. Connect a wearable or add last night's resting heart rate.", "series": []}
     results = evaluate([_night(r) for r in rows], medicines=user.regular_medicines or [], very_active=user.activity == "active")
     last, last_row = results[-1], rows[-1]
+    lab_context = []
+    if last.level in ("watch", "check"):
+        labs = latest_by_key(db, user.id)
+        if (hb := labs.get("hemoglobin")) and hb.flag == "low":
+            lab_context.append(f"Your report on {hb.taken_on:%d %b %Y} showed low haemoglobin ({hb.value:g} {hb.unit}), which can also raise resting heart rate.")
+        if (t := labs.get("tsh")) and t.flag == "low":
+            lab_context.append(f"Your report on {t.taken_on:%d %b %Y} showed low TSH ({t.value:g}), which can be linked to an overactive thyroid and a faster heart rate.")
+        if (c := labs.get("crp")) and c.flag == "high":
+            lab_context.append(f"Your last CRP ({c.value:g} {c.unit}, {c.taken_on:%d %b %Y}) was raised, a sign of inflammation.")
+        if lab_context:
+            last.message += " " + " ".join(lab_context) + " Mention this to your doctor."
     stale = (date.today() - last.day).days > 2
     series = [
         {"day": r.day, "rhr": row.rhr, "baseline": r.baseline["rhr"], "spread": r.baseline["rhr_spread"],
@@ -109,7 +121,7 @@ def signals_today(user: User = Depends(current_user), db: Session = Depends(get_
     ]
     return {
         "day": last.day, "level": last.level, "reasons": last.reasons, "message": last.message,
-        "flags": last.flags, "baseline": last.baseline, "tags": last_row.tags or [],
+        "flags": last.flags, "baseline": last.baseline, "lab_context": lab_context, "tags": last_row.tags or [],
         "latest": _row_out(last_row), "stale": stale, "series": series,
     }
 
@@ -141,10 +153,10 @@ def get_trends(days: int = 30, user: User = Depends(current_user), db: Session =
     """Every metric over 7/30/90 days, with daily Recovery/Sleep/Activity scores and patterns."""
     if days not in (7, 30, 90):
         raise HTTPException(422, "days must be 7, 30 or 90")
-    since = date.today() - timedelta(days=2 * days + 30)
+    since = date.today() - timedelta(days=max(2 * days, 90) + 30)
     vit = {r.day: {f: getattr(r, f) for f in FIELDS} for r in db.scalars(
         select(NightlyVitals).where(NightlyVitals.user_id == user.id, NightlyVitals.day >= since))}
     logs = {r.day: {"water_ml": r.water_ml, "steps": r.steps, "sleep_hours": r.sleep_hours, "mood": r.mood} for r in db.scalars(
         select(DailyLog).where(DailyLog.user_id == user.id, DailyLog.day >= since))}
     age = user.age or 30
-    return trends_mod.build(days, date.today(), vit, logs, sleep_target_for(age)[0], steps_goal_for(age, user.activity or "light"))
+    return trends_mod.build(days, date.today(), vit, logs, sleep_target_for(age)[0], steps_goal_for(age, user.activity or "light"), age)
