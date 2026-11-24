@@ -37,6 +37,9 @@ def make_person(rng: random.Random, days: int = 180, start: date = date(2026, 1,
     base_resp = rng.gauss(14.5, 1.2)
     base_steps = max(2000, rng.gauss(7500, 2500))
     cycle_start = rng.randint(0, 27)
+    # slow drift (training change / deconditioning) in ~25% of people: +3..6 bpm over 2-4 weeks, then stays
+    drift_start = rng.randint(30, days - 40) if rng.random() < 0.25 else None
+    drift_amt, drift_len = rng.uniform(3, 6), rng.randint(14, 28)
 
     # ---- schedule illnesses (after 30-day warm-up, ≥ 30 days apart)
     illnesses: list[Illness] = []
@@ -105,7 +108,8 @@ def make_person(rng: random.Random, days: int = 180, start: date = date(2026, 1,
                 tags = []
 
         e = effect[i]
-        rhr = base_rhr + bump + e["rhr"] + rng.gauss(0, noise)
+        drift = 0.0 if drift_start is None or i < drift_start else drift_amt * min(1.0, (i - drift_start) / drift_len)
+        rhr = base_rhr + bump + drift + e["rhr"] + rng.gauss(0, noise)
         hrv = base_hrv * math.exp(rng.gauss(0, 0.12)) * (1 - e["hrv"]) * (1 - min(bump, 8) * 0.02) if has_hrv else None
         temp = (rng.gauss(0, 0.15) + e["temp"] + (0.25 if "alcohol" in tags else 0)) if has_temp else None
         resp = base_resp + rng.gauss(0, 0.4) + e["resp"]

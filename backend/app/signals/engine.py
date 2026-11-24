@@ -42,6 +42,9 @@ class Params:
     z_resp: float = 2.0
     steps_drop: float = 0.6
     floor_rhr: float = 1.5
+    # Acute-change test: a NEW alert needs tonight to be this far above the median of nights t-7..t-3.
+    # Separates sudden illness from slow drift (training changes, deconditioning). Spec §3.2.
+    acute_delta: float = 2.0
     floor_lnhrv: float = 0.05
     floor_resp: float = 0.5
 
@@ -101,8 +104,13 @@ def evaluate(nights: list[Night], p: Params = Params(), medicines: list[str] | N
         z_hrv = _z(math.log(n.hrv), hrv_s) if (n.hrv and hrv_s) else None
         z_resp = _z(n.resp, resp_s)
 
+        above_normal = bool(z_rhr is not None and z_rhr >= p.z_rhr and delta is not None and delta >= p.min_delta)
+        recent = [x.rhr for x in nights[max(0, i - 7):i] if x.rhr is not None and 3 <= (n.day - x.day).days <= 7]
+        acute = len(recent) < 3 or (n.rhr - median(recent)) >= p.acute_delta
+        prev_elevated = i > 0 and nights[i - 1].day in elevated_days and (n.day - nights[i - 1].day).days == 1
         flags = {
-            "rhr_elevated": bool(z_rhr is not None and z_rhr >= p.z_rhr and delta is not None and delta >= p.min_delta),
+            "rhr_elevated": above_normal and (acute or prev_elevated),
+            "rhr_drift": above_normal and not acute and not prev_elevated,
             "hrv_low": bool(z_hrv is not None and z_hrv <= -p.z_hrv),
             "temp_up": bool(n.temp_dev is not None and n.temp_dev >= p.temp_up),
             "resp_up": bool(z_resp is not None and z_resp >= p.z_resp),
