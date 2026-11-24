@@ -4,7 +4,9 @@ import {
 import { arrowForward, chevronForward, mic, notificationsOutline } from 'ionicons/icons';
 import { useState } from 'react';
 import HelpButton from '../components/HelpButton';
-import { api, Episode, Profile } from '../services/api';
+import { api, Blueprint, DayLog, Episode, Profile } from '../services/api';
+import TodayTracker from '../components/TodayTracker';
+import WelcomeSplash, { tipFor } from '../ui/WelcomeSplash';
 import { Item, monogram, Pressable, Stagger, useEnterKey } from '../ui/motion';
 import { EcgLine, HeartDot, Ticker } from '../ui/ambient';
 
@@ -17,11 +19,22 @@ const daysSince = (d: string) => Math.max(1, Math.floor((Date.now() - new Date(d
 export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [active, setActive] = useState<Episode[] | null>(null);
+  const [bp, setBp] = useState<Blueprint | null>(null);
+  const [log, setLog] = useState<DayLog | null>(null);
+  const [splash, setSplash] = useState(false);
   const k = useEnterKey();
   const router = useIonRouter();
 
   useIonViewWillEnter(() => {
-    api<Profile>('/profile').then(setProfile).catch(() => {});
+    api<Profile>('/profile').then((p) => {
+      setProfile(p);
+      if (!p.onboarded) { router.push('/onboarding', 'root', 'replace'); return; }
+      api<Blueprint>('/wellness/blueprint').then(setBp).catch(() => {});
+      api<DayLog>('/wellness/today').then(setLog).catch(() => {});
+      try {
+        if (!sessionStorage.getItem('ck_welcomed')) { setSplash(true); sessionStorage.setItem('ck_welcomed', '1'); }
+      } catch { /* storage unavailable */ }
+    }).catch(() => {});
     api<Episode[]>('/episodes?status=active').then(setActive).catch(() => setActive([]));
   });
 
@@ -43,6 +56,16 @@ export default function Home() {
             <p className="muted" style={{ margin: '0 4px 4px', fontWeight: 500 }}>{today}</p>
             <h1 className="h1" style={{ margin: '0 4px 20px' }}>{greeting()}{first ? `, ${first}` : ''}.</h1>
           </Item>
+
+          {bp && log && (
+            <Item>
+              <div className="row" style={{ margin: '0 4px 10px', justifyContent: 'space-between' }}>
+                <div className="eyebrow" style={{ margin: 0 }}>Today's health</div>
+                <span className="chip" onClick={() => router.push('/blueprint')}>My blueprint</span>
+              </div>
+              <TodayTracker bp={bp} log={log} setLog={setLog} k={k} />
+            </Item>
+          )}
 
           {/* Hero card */}
           <Item>
@@ -119,6 +142,7 @@ export default function Home() {
         </Stagger>
         <HelpButton />
       </IonContent>
+      <WelcomeSplash open={splash} name={first} tip={tipFor(profile?.age, profile?.sex)} onClose={() => setSplash(false)} />
     </IonPage>
   );
 }

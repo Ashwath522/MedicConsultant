@@ -36,11 +36,17 @@ class ProfileOut(BaseModel):
     lunch_time: str
     dinner_time: str
     bed_time: str
+    sex: str
+    height_cm: float | None
+    weight_kg: float | None
+    activity: str
+    goals: list[str]
+    onboarded: bool
 
 
 class ProfileUpdate(BaseModel):
     name: str | None = None
-    age: int | None = Field(default=None, ge=0, le=120)
+    age: int | None = Field(default=None, ge=18, le=110)  # adults only (DPDP: minors need parental consent)
     language: str | None = None
     allergies: list[str] | None = None
     chronic_conditions: list[str] | None = None
@@ -50,6 +56,12 @@ class ProfileUpdate(BaseModel):
     lunch_time: str | None = Field(default=None, pattern=TIME)
     dinner_time: str | None = Field(default=None, pattern=TIME)
     bed_time: str | None = Field(default=None, pattern=TIME)
+    sex: Literal["male", "female", "other"] | None = None
+    height_cm: float | None = Field(default=None, ge=100, le=250)
+    weight_kg: float | None = Field(default=None, ge=25, le=300)
+    activity: Literal["sedentary", "light", "moderate", "active"] | None = None
+    goals: list[str] | None = None
+    onboarded: bool | None = None
 
 
 class ContactIn(BaseModel):
@@ -109,3 +121,21 @@ class EpisodeOut(BaseModel):
     issue_description: str
     start_date: date
     status: str
+
+
+class DayLog(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    day: date
+    water_ml: int = 0
+    steps: int = 0
+    sleep_hours: float = 0.0
+    mood: str = ""
+
+
+class DayLogUpdate(BaseModel):
+    """Set absolute values, or use add_water_ml for the one-tap '+ glass' button."""
+    water_ml: int | None = Field(default=None, ge=0, le=10000)
+    add_water_ml: int | None = Field(default=None, ge=-1000, le=2000)
+    steps: int | None = Field(default=None, ge=0, le=100000)
+    sleep_hours: float | None = Field(default=None, ge=0, le=24)
+    mood: Literal["great", "good", "okay", "low", ""] | None = None

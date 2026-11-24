@@ -3,7 +3,7 @@ import {
   IonTitle, IonToolbar, useIonRouter, useIonToast, useIonViewWillEnter,
 } from '@ionic/react';
 import { motion } from 'framer-motion';
-import { bedOutline, cafeOutline, chevronForward, moonOutline, peopleOutline, restaurantOutline, sunnyOutline } from 'ionicons/icons';
+import { bedOutline, bodyOutline, cafeOutline, chevronForward, moonOutline, peopleOutline, pulseOutline, restaurantOutline, sunnyOutline } from 'ionicons/icons';
 import { useState } from 'react';
 import { api, Profile as P, setToken } from '../services/api';
 import { Item, Pressable, Stagger, useEnterKey } from '../ui/motion';
@@ -42,7 +42,7 @@ export default function Profile() {
   const save = async () => {
     try {
       const body = {
-        name: p.name, age: p.age, language: p.language,
+        name: p.name, language: p.language,
         allergies: toList(allergies), chronic_conditions: toList(conditions), regular_medicines: toList(meds),
         ...Object.fromEntries(ROUTINE.map(([key]) => [key, p[key]])),
       };
@@ -78,10 +78,35 @@ export default function Profile() {
             </div>
           </Item>
 
+          <Item><div className="eyebrow">Body & goals</div></Item>
+          <Item>
+            <Pressable className="card tap" onClick={() => router.push('/blueprint')}>
+              <div className="row">
+                <div className="mono"><IonIcon icon={pulseOutline} /></div>
+                <div className="grow">
+                  <div style={{ fontWeight: 650 }}>Health blueprint</div>
+                  <div className="muted" style={{ fontSize: 14 }}>
+                    {p.sex ? `${p.sex === 'other' ? '' : p.sex[0].toUpperCase() + p.sex.slice(1) + ' · '}${p.age ?? '–'} yrs · ${p.height_cm ?? '–'} cm · ${p.weight_kg ?? '–'} kg` : 'Not set up yet'}
+                  </div>
+                </div>
+                <IonIcon icon={chevronForward} style={{ color: 'var(--ck-faint)' }} />
+              </div>
+            </Pressable>
+            <Pressable className="card tap" onClick={() => router.push('/onboarding')}>
+              <div className="row">
+                <div className="mono"><IonIcon icon={bodyOutline} /></div>
+                <div className="grow">
+                  <div style={{ fontWeight: 650 }}>Update body & goals</div>
+                  <div className="muted" style={{ fontSize: 14 }}>Sex, age, height, weight, activity</div>
+                </div>
+                <IonIcon icon={chevronForward} style={{ color: 'var(--ck-faint)' }} />
+              </div>
+            </Pressable>
+          </Item>
+
           <Item><div className="eyebrow">About you</div></Item>
           <Item>
             <div className="field"><IonInput label="Name" labelPlacement="floating" value={p.name} onIonInput={(e) => set('name', e.detail.value ?? '')} /></div>
-            <div className="field"><IonInput label="Age" labelPlacement="floating" type="number" value={p.age ?? ''} onIonInput={(e) => set('age', e.detail.value ? Number(e.detail.value) : null)} /></div>
             <div className="chips" style={{ margin: '6px 0 4px' }}>
               {LANGS.map(([v, l]) => (
                 <motion.span key={v} whileTap={{ scale: 0.92 }} className={`chip ${p.language === v ? 'on' : ''}`} onClick={() => set('language', v)}>{l}</motion.span>
