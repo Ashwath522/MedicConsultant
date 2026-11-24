@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.core.db import Base, engine, ensure_columns
-from app.routers import auth, consultations, contacts, episodes, profile, wellness
+from app.routers import auth, consultations, contacts, episodes, profile, signals, wellness
 
 # Creates tables on startup (fine for development; add Alembic migrations later).
 Base.metadata.create_all(bind=engine)
@@ -31,3 +31,4 @@ app.include_router(contacts.router)
 app.include_router(episodes.router)
 app.include_router(consultations.router)
 app.include_router(wellness.router)
+app.include_router(signals.router)

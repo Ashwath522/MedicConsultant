@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.0-flash"
     whisper_model: str = "small"
     max_audio_mb: int = 50
-    keep_audio: bool = False  # privacy default: delete audio after transcription
+    keep_audio: bool = False
+    allow_demo: bool = True  # /vitals/demo loads simulated data; set false in production  # privacy default: delete audio after transcription
 
     @property
     def cors_list(self) -> list[str]:

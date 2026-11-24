@@ -52,7 +52,7 @@ const Tabs = () => (
       <IonTabButton tab="home" href="/home"><IonIcon icon={home} /><IonLabel>Home</IonLabel></IonTabButton>
       <IonTabButton tab="episodes" href="/episodes"><IonIcon icon={layers} /><IonLabel>Episodes</IonLabel></IonTabButton>
       <IonTabButton tab="new" href="/new"><IonIcon icon={add} /><IonLabel>New</IonLabel></IonTabButton>
-      <IonTabButton tab="timeline" href="/timeline"><IonIcon icon={pulse} /><IonLabel>Recovery</IonLabel></IonTabButton>
+      <IonTabButton tab="timeline" href="/timeline"><IonIcon icon={pulse} /><IonLabel>Signals</IonLabel></IonTabButton>
       <IonTabButton tab="profile" href="/profile"><IonIcon icon={person} /><IonLabel>Profile</IonLabel></IonTabButton>
     </IonTabBar>
   </IonTabs>
