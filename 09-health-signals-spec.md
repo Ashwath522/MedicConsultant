@@ -57,7 +57,8 @@ Run each morning for the night that just ended (an *online* algorithm: it only u
 ### 3.2 Per-night signals
 | Flag | Rule |
 |---|---|
-| `rhr_elevated` | z_RHR = (RHR − median) / spread **≥ Z_RHR** and RHR − median **≥ MIN_DELTA** bpm |
+| `rhr_elevated` | z_RHR = (RHR − median) / spread **≥ Z_RHR** and RHR − median **≥ MIN_DELTA** bpm, **and** the change is *sudden*: RHR − median(nights t−7…t−3) **≥ ACUTE_DELTA** (2 bpm), unless the previous night was already elevated (so an ongoing illness keeps its alert) |
+| `rhr_drift` | above normal but **not** sudden → slow drift (training change, deconditioning). Shown, never alerts. |
 | `hrv_low` | z_lnHRV **≤ −Z_HRV** |
 | `temp_up` | temperature deviation **≥ TEMP_UP** °C (devices report deviation from the person's own baseline) |
 | `resp_up` | z_resp **≥ 2.0** |
@@ -148,6 +149,35 @@ Run each morning for the night that just ended (an *online* algorithm: it only u
 **Tuned parameters** (now the defaults in `engine.Params`): `Z_RHR = 2.0`, `MIN_DELTA = 2.0 bpm`, `CONSEC = 2 nights`, `TEMP_UP = 0.4 °C`, `Z_HRV = 1.5`.
 
 **Guard rails in CI:** `tests/test_signals.py::test_validation_regression` re-scores a fresh cohort (seed 303) on every test run and fails if sensitivity drops below 75 % or false alerts rise above 0.5/person-month. Other unit tests cover: learning period, 1 vs 2 nights, temperature + RHR, tag downgrade, safety net, medicine notes, baseline not contaminated by illness, SDNN/RMSSD never mixed.
+
+### 7.1 Scenario tests: fully-measured test profile "Arjun"
+35 healthy nights with every signal (RHR, HRV-RMSSD, wrist temp, breathing, steps, sleep), then an event. Run through the real API (`tests/test_scenarios.py`); try any of them in the app with `python scripts/seed_test_profile.py --scenario <name>`.
+
+| Scenario | What happens | Expected | Result |
+|---|---|---|---|
+| normal | ordinary nights | Normal | ✅ Normal |
+| one_spike | 1 night RHR +7 | Watch | ✅ Watch |
+| infection | RHR +3 → +8 → +11, HRV ↓, temp ↑, breathing ↑, steps ↓ | Check | ✅ Check (by night 2) |
+| fever_one_night | RHR +6 and temp +0.9 °C same night | Check | ✅ Check |
+| alcohol | 2 raised nights, tagged alcohol / late night | Watch | ✅ Watch, explains the tags |
+| alcohol_untagged | same, no tags | Check | ✅ Check |
+| tachycardia | RHR 108 | Check (safety) | ✅ Check |
+| bradycardia | RHR 38 | Check (safety) | ✅ Check |
+| silent_hrv | HRV −45 %, breathing +2.2, RHR normal | Watch | ✅ Watch |
+| thermometer | manual 38.6 °C | Check | ✅ Check |
+| slow_drift | +5 bpm over 3 weeks | Normal | ❌ **first run gave Check** → fixed → ✅ Normal |
+
+**Loop iteration 3 (what the scenario test found).** The slow-drift false alarm happened because excluding flagged nights from the baseline let the baseline fall behind a gradual rise. **Fix:** the acute-change rule above. Slow drift (25 % of simulated people) was also added to the simulator. Same held-out cohort, before vs after:
+
+| | Moderate caught | False alerts / person-month |
+|---|---|---|
+| Without acute test | 90.5 % | 0.179 |
+| **With acute test (default)** | **89.9 %** | **0.146** (−18 %) |
+| "Sensitive" operating point found by re-tuning (z 1.5, Δ 3, temp 0.5) | 97.0 % | 0.331 |
+
+**Decision:** keep the **balanced** defaults. Frequent false alarms teach people to ignore alerts. The sensitive point is documented as a possible user setting.
+
+**Not covered: irregular rhythm (e.g. atrial fibrillation).** This engine works on *nightly averages*; detecting AF needs beat-to-beat data. Apple Watch already does this and writes an `irregularHeartRhythmEvent` to Apple Health. Next step: accept that event via `/vitals` and treat it as a safety-net "talk to a doctor".
 
 **How to read this honestly:** these numbers show the logic behaves as designed on *realistic simulated* patterns (based on the published studies in §1). The Stanford system reported ~80 % on real COVID-19 cases, so our simulated 92 % should be expected to drop on real data. Real-data validation is the next step (§6.5).
 

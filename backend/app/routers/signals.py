@@ -112,6 +112,14 @@ def signals_today(user: User = Depends(current_user), db: Session = Depends(get_
     }
 
 
+@router.delete("/vitals", status_code=204)
+def delete_vitals(user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Delete all of your nightly vitals (privacy / start fresh)."""
+    db.execute(delete(NightlyVitals).where(NightlyVitals.user_id == user.id))
+    audit(db, user.id, "delete", "vitals:all")
+    db.commit()
+
+
 @router.post("/vitals/demo")
 def load_demo(user: User = Depends(current_user), db: Session = Depends(get_db)):
     """Development only: replace your vitals with 60 simulated nights ending in an illness pattern."""
