@@ -9,6 +9,7 @@ import HelpButton from '../components/HelpButton';
 import { api, Consultation, Episode, fmtTime } from '../services/api';
 import { Item, monogram, Pressable, Stagger, useEnterKey } from '../ui/motion';
 import Stepper, { Step } from '../ui/Stepper';
+import { EcgLine } from '../ui/ambient';
 
 const daysSince = (d: string) => Math.max(1, Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000) + 1);
 
@@ -84,7 +85,7 @@ export default function EpisodeDetail({ match }: RouteComponentProps<{ id: strin
         {ep && (
           <Stagger k={k} className="page" >
             <Item>
-              <div className="card ink" style={{ marginTop: 8 }}>
+              <div className="card ink beam" style={{ marginTop: 8 }}>
                 <div className="row">
                   <div className="mono">{monogram(ep.category)}</div>
                   <div className="grow">
@@ -95,6 +96,7 @@ export default function EpisodeDetail({ match }: RouteComponentProps<{ id: strin
                   </div>
                 </div>
                 {ep.issue_description && <p className="muted" style={{ margin: '14px 0 0', lineHeight: 1.5 }}>"{ep.issue_description}"</p>}
+                {active && <div style={{ margin: '12px -18px -18px' }}><EcgLine beats={3} height={36} color="#fafafa" speed={2.8} /></div>}
               </div>
             </Item>
 

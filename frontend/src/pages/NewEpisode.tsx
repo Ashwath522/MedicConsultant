@@ -7,6 +7,7 @@ import { sparkles } from 'ionicons/icons';
 import { useState } from 'react';
 import { api, Episode } from '../services/api';
 import { EASE, Item, Stagger, useEnterKey } from '../ui/motion';
+import { Shimmer } from '../ui/ambient';
 
 const CATEGORIES = [
   'Fever', 'Cold & Cough', 'Infection', 'Stomach', 'Injury', 'Surgery', 'Skin', 'Dental', 'Eye',
@@ -97,7 +98,7 @@ export default function NewEpisode() {
                     <IonIcon icon={sparkles} style={{ fontSize: 22 }} />
                   </motion.div>
                   <div className="grow">
-                    <div style={{ fontWeight: 650 }}>Organising…</div>
+                    <div style={{ fontWeight: 650 }}><Shimmer>Organising your episode…</Shimmer></div>
                     <div className="skeleton" style={{ height: 10, marginTop: 10, width: '80%' }} />
                     <div className="skeleton" style={{ height: 10, marginTop: 8, width: '55%' }} />
                   </div>

@@ -65,7 +65,7 @@ export default function ConsultationView({ match }: RouteComponentProps<{ id: st
             </Item>
 
             <Item>
-              <div className="card ink" style={{ marginTop: 14 }}>
+              <div className="card ink beam" style={{ marginTop: 14 }}>
                 <div className="row">
                   <IonIcon icon={sparklesOutline} style={{ fontSize: 22 }} />
                   <div className="grow">

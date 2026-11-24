@@ -43,7 +43,7 @@ export default function Episodes() {
           <AnimatePresence mode="popLayout">
             {items?.length === 0 && (
               <motion.div key={`empty-${tab}`} className="empty" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
-                <div className="empty-icon"><IonIcon icon={layersOutline} /></div>
+                <div className="empty-icon float"><IonIcon icon={layersOutline} /></div>
                 <div style={{ fontWeight: 650, color: 'var(--ck-text)' }}>{tab === 'active' ? 'No active episodes' : 'No past episodes yet'}</div>
                 <div style={{ fontSize: 14, marginTop: 4 }}>{tab === 'active' ? 'Tap New to start one.' : 'Closed episodes appear here.'}</div>
               </motion.div>

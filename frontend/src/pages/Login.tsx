@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useState } from 'react';
 import { api, setToken } from '../services/api';
 import Logo from '../ui/Logo';
+import { Ambient, EcgLine, FloatingPills } from '../ui/ambient';
 import { EASE } from '../ui/motion';
 
 const WORDS = ['Your', "doctor's", 'advice,', 'remembered.'];
@@ -33,7 +34,9 @@ export default function Login() {
     <IonPage>
       <IonContent fullscreen scrollY style={{ '--background': '#000' }}>
         {/* Black hero */}
-        <div style={{ color: '#fafafa', padding: 'calc(env(safe-area-inset-top) + 36px) 28px 36px' }}>
+        <div className="hero" style={{ position: 'relative', overflow: 'hidden', color: '#fafafa', padding: 'calc(env(safe-area-inset-top) + 36px) 28px 28px' }}>
+          <Ambient tone="dark" />
+          <FloatingPills />
           <Logo size={52} color="#fafafa" />
           <h1 style={{ fontSize: 34, fontWeight: 750, letterSpacing: '-0.04em', lineHeight: 1.05, margin: '22px 0 10px' }}>
             {WORDS.map((w, i) => (
@@ -54,6 +57,9 @@ export default function Login() {
           >
             Record the consultation. Check the prescription. Recover with confidence.
           </motion.p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.7, duration: 1 }} style={{ marginTop: 18 }}>
+            <EcgLine beats={4} height={40} color="#fafafa" speed={3.6} />
+          </motion.div>
         </div>
 
         {/* White sheet slides up */}

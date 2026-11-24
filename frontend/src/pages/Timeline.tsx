@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { pulseOutline } from 'ionicons/icons';
 import HelpButton from '../components/HelpButton';
 import { Item, Stagger, useEnterKey } from '../ui/motion';
+import { Ambient, EcgLine, HeartDot } from '../ui/ambient';
 
 export default function Timeline() {
   const k = useEnterKey();
@@ -13,12 +14,15 @@ export default function Timeline() {
         <IonHeader collapse="condense"><IonToolbar><IonTitle size="large">Recovery</IonTitle></IonToolbar></IonHeader>
         <Stagger k={k} className="page">
           <Item>
-            <div className="card ink" style={{ padding: 24 }}>
+            <div className="card ink beam" style={{ padding: 24 }}>
+              <Ambient tone="dark" dots={false} />
               <motion.div animate={{ scale: [1, 1.12, 1] }} transition={{ duration: 1.6, repeat: Infinity }} style={{ display: 'inline-block' }}>
                 <IonIcon icon={pulseOutline} style={{ fontSize: 34 }} />
               </motion.div>
               <div className="h2" style={{ marginTop: 12 }}>Your recovery, day by day.</div>
               <p className="muted" style={{ lineHeight: 1.5 }}>Doses taken, symptoms, sleep and follow-ups will build a timeline here once your care plan is running.</p>
+              <div className="row" style={{ gap: 8, fontSize: 13, fontWeight: 600, marginTop: 4 }}><HeartDot color="#fafafa" /> Monitoring</div>
+              <div style={{ margin: '8px -24px -24px' }}><EcgLine beats={5} height={64} color="#fafafa" speed={4} /></div>
             </div>
           </Item>
           {['Medicine adherence', 'Symptom trend', 'Sleep', 'Upcoming follow-ups'].map((t) => (
