@@ -27,6 +27,8 @@ import RecordConsultation from './pages/RecordConsultation';
 import ConsultationView from './pages/ConsultationView';
 import Profile from './pages/Profile';
 import Contacts from './pages/Contacts';
+import Onboarding from './pages/Onboarding';
+import BlueprintPage from './pages/BlueprintPage';
 
 // iOS look everywhere (nav bars, tab bar, swipe-back), even in a desktop browser.
 setupIonicReact({ mode: 'ios' });
@@ -43,6 +45,7 @@ const Tabs = () => (
       <Route exact path="/timeline" component={Timeline} />
       <Route exact path="/profile" component={Profile} />
       <Route exact path="/profile/contacts" component={Contacts} />
+      <Route exact path="/blueprint" component={BlueprintPage} />
       <Route exact path="/" render={() => <Redirect to="/home" />} />
     </IonRouterOutlet>
     <IonTabBar slot="bottom">
@@ -62,6 +65,7 @@ export default function App() {
         <IonReactRouter>
           <IonRouterOutlet>
             <Route exact path="/login" component={Login} />
+            <Route exact path="/onboarding" render={() => (getToken() ? <Onboarding /> : <Redirect to="/login" />)} />
             <Route render={() => (getToken() ? <Tabs /> : <Redirect to="/login" />)} />
           </IonRouterOutlet>
         </IonReactRouter>

@@ -68,6 +68,8 @@ export interface Profile {
   id: string; email: string; name: string; age: number | null; language: string;
   allergies: string[]; chronic_conditions: string[]; regular_medicines: string[];
   wake_time: string; breakfast_time: string; lunch_time: string; dinner_time: string; bed_time: string;
+  sex: '' | 'male' | 'female' | 'other'; height_cm: number | null; weight_kg: number | null;
+  activity: 'sedentary' | 'light' | 'moderate' | 'active'; goals: string[]; onboarded: boolean;
 }
 export interface Contact {
   id: string; type: 'family' | 'doctor'; name: string; phone: string; relation: string; caregiver_alerts: boolean;
@@ -75,3 +77,12 @@ export interface Contact {
 export interface Episode {
   id: string; title: string; category: string; issue_description: string; start_date: string; status: 'active' | 'closed';
 }
+
+export interface Checkup { name: string; how_often: string; why: string }
+export interface Blueprint {
+  life_stage: string;
+  bmi: { value: number; category: string; healthy_range_kg: [number, number]; scale: string };
+  bmr: number; calories: number; water_ml: number; sleep_hours: [number, number]; steps: number;
+  active_minutes_week: number; checkups: Checkup[]; disclaimer: string;
+}
+export interface DayLog { day: string; water_ml: number; steps: number; sleep_hours: number; mood: string }

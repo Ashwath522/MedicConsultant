@@ -22,7 +22,7 @@ export default function Login() {
       const body = mode === 'signup' ? { name, email, password } : { email, password };
       const { token } = await api<{ token: string }>(`/auth/${mode}`, { method: 'POST', body });
       setToken(token);
-      window.location.href = mode === 'signup' ? '/profile' : '/home';
+      window.location.href = mode === 'signup' ? '/onboarding' : '/home';
     } catch (e) {
       toast({ message: (e as Error).message, duration: 2500, position: 'top' });
     } finally {
