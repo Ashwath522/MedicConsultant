@@ -11,6 +11,7 @@ import { extFor, Recorder } from '../services/recorder';
 import { EASE, Item, Stagger } from '../ui/motion';
 import Stepper from '../ui/Stepper';
 import Waveform from '../ui/Waveform';
+import { Ambient, Shimmer } from '../ui/ambient';
 
 type Stage = 'consent' | 'ready' | 'recording' | 'paused' | 'uploading';
 const LANGS = [['', 'Auto-detect'], ['en', 'English'], ['hi', 'Hindi'], ['kn', 'Kannada']] as const;
@@ -144,12 +145,14 @@ export default function RecordConsultation({ match }: RouteComponentProps<{ id: 
           {dark && (
             <motion.div
               key="stage"
+              className="hero"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.4 }}
-              style={{ minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: 24 }}
+              style={{ position: 'relative', minHeight: '80vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 28, padding: 24 }}
             >
+              <Ambient tone="dark" dots={stage === 'recording'} />
               <div className="ion-text-center">
                 <motion.div className="timer" key={stage === 'ready' ? 'r' : 'g'} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   {fmtTime(seconds)}
@@ -231,7 +234,7 @@ export default function RecordConsultation({ match }: RouteComponentProps<{ id: 
           {/* ---------- Processing ---------- */}
           {stage === 'uploading' && (
             <motion.div key="up" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }} className="page" style={{ paddingTop: 40 }}>
-              <h1 className="h1" style={{ marginBottom: 8 }}>Making sense of it…</h1>
+              <h1 className="h1" style={{ marginBottom: 8 }}><Shimmer>Making sense of it…</Shimmer></h1>
               <p className="lead" style={{ marginBottom: 28 }}>This takes a moment for longer consultations.</p>
               <div className="card">
                 <Stepper

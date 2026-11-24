@@ -276,3 +276,114 @@ ion-segment-button { --indicator-color: var(--ck-bg); --color-checked: var(--ck-
 @media (prefers-reduced-motion: reduce) {
   .logo-draw { animation: none; stroke-dashoffset: 0; opacity: 1; }
 }
+
+/* ============================================================
+   Ambient, always-on motion (health themed)
+   ============================================================ */
+
+/* ECG trace: a bright segment sweeps along the line forever */
+.ecg-run {
+  stroke-dasharray: 0.22 0.78;
+  stroke-dashoffset: 1;
+  animation: ck-ecg 3.2s linear infinite;
+}
+@keyframes ck-ecg { to { stroke-dashoffset: 0; } }
+
+/* Drifting light orbs + dot grid */
+.ambient { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.ambient .orb {
+  position: absolute; border-radius: 50%; filter: blur(48px); opacity: 0.55;
+  animation: ck-drift 22s ease-in-out infinite alternate;
+}
+.ambient.dark .orb { background: radial-gradient(circle, rgba(255, 255, 255, 0.28), transparent 65%); }
+.ambient.light .orb { background: radial-gradient(circle, rgba(0, 0, 0, 0.07), transparent 65%); }
+.ambient .o1 { width: 320px; height: 320px; top: -120px; left: -80px; }
+.ambient .o2 { width: 260px; height: 260px; top: 30%; right: -100px; animation-duration: 28s; animation-delay: -6s; }
+.ambient .o3 { width: 220px; height: 220px; bottom: -80px; left: 30%; animation-duration: 25s; animation-delay: -12s; }
+@keyframes ck-drift {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(40px, 30px) scale(1.15); }
+  100% { transform: translate(-30px, 50px) scale(0.95); }
+}
+.ambient .dots {
+  position: absolute; inset: 0;
+  background-image: radial-gradient(currentColor 1px, transparent 1px);
+  background-size: 22px 22px;
+  opacity: 0.09;
+  mask-image: radial-gradient(ellipse at 30% 20%, #000 10%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse at 30% 20%, #000 10%, transparent 70%);
+  animation: ck-dots 40s linear infinite;
+}
+@keyframes ck-dots { to { background-position: 22px 44px; } }
+
+/* Floating capsules */
+.pills { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.pill {
+  position: absolute; bottom: -40px; width: 12px; height: 30px; border-radius: 999px;
+  border: 1.5px solid; opacity: 0;
+  animation: ck-rise linear infinite;
+}
+.pill::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1.5px; background: currentColor; }
+.pill.plus { width: 18px; height: 18px; border: 0; border-radius: 0; }
+.pill.plus::before, .pill.plus::after {
+  content: ''; position: absolute; background: currentColor; border-radius: 2px;
+}
+.pill.plus::before { left: 7px; top: 0; width: 4px; height: 18px; }
+.pill.plus::after { left: 0; top: 7px; width: 18px; height: 4px; }
+@keyframes ck-rise {
+  0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translateY(-520px) rotate(220deg); opacity: 0; }
+}
+
+/* Border beam: light travelling around a card's edge */
+@property --beam-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.beam { position: relative; isolation: isolate; }
+.beam::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1.5px; z-index: 2; pointer-events: none;
+  background: conic-gradient(from var(--beam-angle), transparent 0 72%, var(--beam-color, rgba(255, 255, 255, 0.95)) 86%, transparent 100%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  animation: ck-beam 5s linear infinite;
+}
+.card:not(.ink).beam { --beam-color: rgba(10, 10, 10, 0.85); }
+@keyframes ck-beam { to { --beam-angle: 360deg; } }
+
+/* Shimmering text */
+.shimmer-text {
+  background: linear-gradient(100deg, var(--ck-text) 0%, var(--ck-text) 38%, var(--ck-faint) 50%, var(--ck-text) 62%, var(--ck-text) 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  animation: ck-shine 2.4s linear infinite;
+}
+@keyframes ck-shine { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+/* Heartbeat dot (lub-dub) */
+.heart-dot { display: inline-block; border-radius: 50%; animation: ck-heart 1.3s ease-in-out infinite; vertical-align: middle; }
+@keyframes ck-heart {
+  0%, 100% { transform: scale(1); opacity: 0.9; }
+  15% { transform: scale(1.5); opacity: 1; }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.3); }
+  60% { transform: scale(1); }
+}
+
+/* Subtle floating for icons */
+.float { animation: ck-float 4s ease-in-out infinite; }
+@keyframes ck-float { 50% { transform: translateY(-6px); } }
+
+/* Cards lift slightly on hover (desktop) */
+@media (hover: hover) {
+  .card.tap { transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease; }
+  .card.tap:hover { transform: translateY(-2px); box-shadow: var(--ck-shadow-lg); }
+}
+
+/* Keep card content above ambient layers */
+.card > :not(.ambient):not(.pills), .hero > :not(.ambient):not(.pills) { position: relative; z-index: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ecg-run, .ambient .orb, .ambient .dots, .pill, .beam::before, .shimmer-text, .heart-dot, .float { animation: none !important; }
+  .pill { display: none; }
+}

@@ -6,6 +6,7 @@ import { useState } from 'react';
 import HelpButton from '../components/HelpButton';
 import { api, Episode, Profile } from '../services/api';
 import { Item, monogram, Pressable, Stagger, useEnterKey } from '../ui/motion';
+import { EcgLine, HeartDot, Ticker } from '../ui/ambient';
 
 const greeting = () => {
   const h = new Date().getHours();
@@ -45,11 +46,11 @@ export default function Home() {
 
           {/* Hero card */}
           <Item>
-            <div className="card ink">
+            <div className="card ink beam">
               <div className="row" style={{ alignItems: 'flex-start' }}>
                 <div className="grow">
                   <div className="muted" style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    Reminders
+                    <HeartDot color="#fafafa" size={7} />&nbsp; Reminders
                   </div>
                   <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', marginTop: 8 }}>
                     Nothing due right now
@@ -62,7 +63,7 @@ export default function Home() {
               </div>
               <div className="row" style={{ marginTop: 20, gap: 24 }}>
                 <div>
-                  <div className="tabular" style={{ fontSize: 28, fontWeight: 700 }}>{active?.length ?? '–'}</div>
+                  <div className="tabular" style={{ fontSize: 28, fontWeight: 700 }}><Ticker value={active?.length ?? 0} /></div>
                   <div className="muted" style={{ fontSize: 13 }}>Active issues</div>
                 </div>
                 <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,255,255,0.15)' }} />
@@ -70,6 +71,9 @@ export default function Home() {
                   <div className="tabular" style={{ fontSize: 28, fontWeight: 700 }}>0</div>
                   <div className="muted" style={{ fontSize: 13 }}>Doses today</div>
                 </div>
+              </div>
+              <div style={{ margin: '16px -18px -18px', opacity: 0.9 }}>
+                <EcgLine beats={4} height={44} color="#fafafa" />
               </div>
             </div>
           </Item>
