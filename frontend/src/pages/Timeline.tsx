@@ -3,7 +3,8 @@ import {
   useIonViewWillEnter,
 } from '@ionic/react';
 import { motion } from 'framer-motion';
-import { flaskOutline, phonePortraitOutline } from 'ionicons/icons';
+import { analyticsOutline, chevronForward, flaskOutline, phonePortraitOutline } from 'ionicons/icons';
+import { Pressable } from '../ui/motion';
 import { useState } from 'react';
 import HelpButton from '../components/HelpButton';
 import { LEVEL } from '../components/SignalCard';
@@ -81,6 +82,19 @@ export default function Timeline() {
               )}
               <div style={{ margin: '14px -22px -22px' }}><EcgLine beats={5} height={52} color="#fafafa" speed={loud ? 1.8 : 3.6} /></div>
             </div>
+          </Item>
+
+          <Item>
+            <Pressable className="card tap" onClick={() => router.push('/trends')}>
+              <div className="row">
+                <div className="mono" style={{ background: 'var(--ck-ink)', color: 'var(--ck-on-ink)' }}><IonIcon icon={analyticsOutline} /></div>
+                <div className="grow">
+                  <div style={{ fontWeight: 700 }}>See all trends</div>
+                  <div className="muted" style={{ fontSize: 13 }}>Recovery, sleep, HRV, heart rate, temperature, steps & more</div>
+                </div>
+                <IonIcon icon={chevronForward} style={{ color: 'var(--ck-faint)' }} />
+              </div>
+            </Pressable>
           </Item>
 
           {/* Chart */}

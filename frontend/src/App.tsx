@@ -29,6 +29,7 @@ import Profile from './pages/Profile';
 import Contacts from './pages/Contacts';
 import Onboarding from './pages/Onboarding';
 import BlueprintPage from './pages/BlueprintPage';
+import Trends from './pages/Trends';
 
 // iOS look everywhere (nav bars, tab bar, swipe-back), even in a desktop browser.
 setupIonicReact({ mode: 'ios' });
@@ -46,6 +47,7 @@ const Tabs = () => (
       <Route exact path="/profile" component={Profile} />
       <Route exact path="/profile/contacts" component={Contacts} />
       <Route exact path="/blueprint" component={BlueprintPage} />
+      <Route exact path="/trends" component={Trends} />
       <Route exact path="/" render={() => <Redirect to="/home" />} />
     </IonRouterOutlet>
     <IonTabBar slot="bottom">
