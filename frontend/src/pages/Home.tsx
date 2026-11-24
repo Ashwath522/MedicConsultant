@@ -1,50 +1,118 @@
 import {
-  IonButton, IonCard, IonCardContent, IonCardHeader, IonCardSubtitle, IonCardTitle, IonContent, IonHeader,
-  IonPage, IonTitle, IonToolbar, useIonViewWillEnter,
+  IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar, useIonRouter, useIonViewWillEnter,
 } from '@ionic/react';
+import { arrowForward, chevronForward, mic, notificationsOutline } from 'ionicons/icons';
 import { useState } from 'react';
 import HelpButton from '../components/HelpButton';
 import { api, Episode, Profile } from '../services/api';
+import { Item, monogram, Pressable, Stagger, useEnterKey } from '../ui/motion';
+
+const greeting = () => {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+};
+const daysSince = (d: string) => Math.max(1, Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000) + 1);
 
 export default function Home() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [active, setActive] = useState<Episode[]>([]);
+  const [active, setActive] = useState<Episode[] | null>(null);
+  const k = useEnterKey();
+  const router = useIonRouter();
 
   useIonViewWillEnter(() => {
     api<Profile>('/profile').then(setProfile).catch(() => {});
-    api<Episode[]>('/episodes?status=active').then(setActive).catch(() => {});
+    api<Episode[]>('/episodes?status=active').then(setActive).catch(() => setActive([]));
   });
+
+  const first = profile?.name?.split(' ')[0];
+  const today = new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
     <IonPage>
-      <IonHeader><IonToolbar><IonTitle>Home</IonTitle></IonToolbar></IonHeader>
-      <IonContent fullscreen className="ion-padding">
-        <h2>Hi {profile?.name?.split(' ')[0] ?? 'there'} 👋</h2>
+      <IonHeader translucent>
+        <IonToolbar><IonTitle>Today</IonTitle></IonToolbar>
+      </IonHeader>
+      <IonContent fullscreen>
+        <IonHeader collapse="condense">
+          <IonToolbar><IonTitle size="large">Today</IonTitle></IonToolbar>
+        </IonHeader>
 
-        <IonCard>
-          <IonCardHeader>
-            <IonCardSubtitle>Today</IonCardSubtitle>
-            <IonCardTitle>No reminders yet</IonCardTitle>
-          </IonCardHeader>
-          <IonCardContent>Your medicine and check-in reminders will appear here once a care plan is set up.</IonCardContent>
-        </IonCard>
+        <Stagger k={k} className="page">
+          <Item>
+            <p className="muted" style={{ margin: '0 4px 4px', fontWeight: 500 }}>{today}</p>
+            <h1 className="h1" style={{ margin: '0 4px 20px' }}>{greeting()}{first ? `, ${first}` : ''}.</h1>
+          </Item>
 
-        <h3>Active episodes</h3>
-        {active.length === 0 ? (
-          <div className="empty">
-            <p>No active health issues.</p>
-            <IonButton routerLink="/new">Start a new episode</IonButton>
-          </div>
-        ) : (
-          active.map((e) => (
-            <IonCard key={e.id} routerLink={`/episodes/${e.id}`} button>
-              <IonCardHeader>
-                <IonCardSubtitle>{e.category}</IonCardSubtitle>
-                <IonCardTitle>{e.title}</IonCardTitle>
-              </IonCardHeader>
-            </IonCard>
-          ))
-        )}
+          {/* Hero card */}
+          <Item>
+            <div className="card ink">
+              <div className="row" style={{ alignItems: 'flex-start' }}>
+                <div className="grow">
+                  <div className="muted" style={{ fontSize: 13, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                    Reminders
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', marginTop: 8 }}>
+                    Nothing due right now
+                  </div>
+                  <div className="muted" style={{ fontSize: 14, marginTop: 6, lineHeight: 1.45 }}>
+                    Medicine, water and check-in reminders appear here once your care plan is ready.
+                  </div>
+                </div>
+                <IonIcon icon={notificationsOutline} style={{ fontSize: 26, opacity: 0.8 }} />
+              </div>
+              <div className="row" style={{ marginTop: 20, gap: 24 }}>
+                <div>
+                  <div className="tabular" style={{ fontSize: 28, fontWeight: 700 }}>{active?.length ?? '–'}</div>
+                  <div className="muted" style={{ fontSize: 13 }}>Active issues</div>
+                </div>
+                <div style={{ width: 1, alignSelf: 'stretch', background: 'rgba(255,255,255,0.15)' }} />
+                <div>
+                  <div className="tabular" style={{ fontSize: 28, fontWeight: 700 }}>0</div>
+                  <div className="muted" style={{ fontSize: 13 }}>Doses today</div>
+                </div>
+              </div>
+            </div>
+          </Item>
+
+          <Item><div className="eyebrow">Active episodes</div></Item>
+
+          {active === null && (
+            <Item>
+              <div className="skeleton" style={{ height: 76, marginBottom: 12 }} />
+              <div className="skeleton" style={{ height: 76 }} />
+            </Item>
+          )}
+
+          {active?.length === 0 && (
+            <Item>
+              <Pressable className="card tap" onClick={() => router.push('/new')}>
+                <div className="row">
+                  <div className="mono" style={{ background: 'var(--ck-ink)', color: 'var(--ck-on-ink)' }}><IonIcon icon={mic} /></div>
+                  <div className="grow">
+                    <div style={{ fontWeight: 650 }}>Seeing a doctor soon?</div>
+                    <div className="muted" style={{ fontSize: 14 }}>Start an episode and record the visit.</div>
+                  </div>
+                  <IonIcon icon={arrowForward} />
+                </div>
+              </Pressable>
+            </Item>
+          )}
+
+          {active?.map((e) => (
+            <Item key={e.id}>
+              <Pressable className="card tap" onClick={() => router.push(`/episodes/${e.id}`)}>
+                <div className="row">
+                  <div className="mono">{monogram(e.category)}</div>
+                  <div className="grow">
+                    <div className="ellipsis" style={{ fontWeight: 650 }}>{e.title}</div>
+                    <div className="muted" style={{ fontSize: 14 }}>Day {daysSince(e.start_date)} · {e.category}</div>
+                  </div>
+                  <IonIcon icon={chevronForward} style={{ color: 'var(--ck-faint)' }} />
+                </div>
+              </Pressable>
+            </Item>
+          ))}
+        </Stagger>
         <HelpButton />
       </IonContent>
     </IonPage>

@@ -1,38 +1,278 @@
+/* ============================================================
+   ConsultKeeper — monochrome design system
+   Black & white, high contrast, soft depth, iOS feel.
+   ============================================================ */
+
 :root {
-  --ion-color-primary: #0b7a75;
-  --ion-color-primary-rgb: 11, 122, 117;
+  --ck-bg: #ffffff;
+  --ck-surface: #f5f5f4;
+  --ck-surface-2: #ededec;
+  --ck-border: #e7e7e5;
+  --ck-text: #0a0a0a;
+  --ck-muted: #737373;
+  --ck-faint: #a3a3a3;
+  --ck-ink: #0a0a0a;        /* "black" surfaces */
+  --ck-on-ink: #fafafa;     /* text on black */
+  --ck-ink-muted: #a1a1aa;
+  --ck-radius: 22px;
+  --ck-radius-sm: 14px;
+  --ck-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+  --ck-shadow-lg: 0 2px 4px rgba(0, 0, 0, 0.06), 0 24px 48px rgba(0, 0, 0, 0.14);
+
+  --ion-font-family: 'Inter Variable', -apple-system, system-ui, sans-serif;
+  --ion-background-color: var(--ck-bg);
+  --ion-text-color: var(--ck-text);
+  --ion-item-background: transparent;
+  --ion-toolbar-background: rgba(255, 255, 255, 0.82);
+  --ion-tab-bar-background: rgba(255, 255, 255, 0.82);
+  --ion-border-color: var(--ck-border);
+
+  --ion-color-primary: #0a0a0a;
+  --ion-color-primary-rgb: 10, 10, 10;
   --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-shade: #0a6b67;
-  --ion-color-primary-tint: #238783;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
+  --ion-color-primary-shade: #000000;
+  --ion-color-primary-tint: #262626;
+
+  --ion-color-medium: #737373;
+  --ion-color-danger: #dc2626;
 }
 
-.help-fab ion-fab-button {
-  --background: #d6453d;
-  --background-activated: #b93a33;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ck-bg: #000000;
+    --ck-surface: #111111;
+    --ck-surface-2: #1a1a1a;
+    --ck-border: #262626;
+    --ck-text: #fafafa;
+    --ck-muted: #a3a3a3;
+    --ck-faint: #525252;
+    --ck-ink: #fafafa;
+    --ck-on-ink: #0a0a0a;
+    --ck-ink-muted: #525252;
+    --ck-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    --ck-shadow-lg: 0 24px 48px rgba(0, 0, 0, 0.8);
+    --ion-toolbar-background: rgba(0, 0, 0, 0.8);
+    --ion-tab-bar-background: rgba(0, 0, 0, 0.8);
+    --ion-color-primary: #fafafa;
+    --ion-color-primary-rgb: 250, 250, 250;
+    --ion-color-primary-contrast: #0a0a0a;
+    --ion-color-primary-contrast-rgb: 10, 10, 10;
+    --ion-color-primary-shade: #e5e5e5;
+    --ion-color-primary-tint: #ffffff;
+  }
 }
 
-.empty {
-  text-align: center;
-  color: var(--ion-color-medium);
-  padding: 48px 24px;
+body {
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: 'cv11', 'ss01';
+  letter-spacing: -0.011em;
 }
 
-.muted {
-  color: var(--ion-color-medium);
-  font-size: 0.9em;
+/* ---------- Chrome: frosted toolbars + tab bar ---------- */
+ion-toolbar {
+  --border-width: 0;
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
+ion-header.header-ios ion-toolbar:last-of-type { --border-width: 0 0 0.5px; }
+ion-title.title-large { font-weight: 750; letter-spacing: -0.03em; }
 
-/* Keep the floating Help button from covering the last item on a page */
-ion-content::part(scroll) {
-  padding-bottom: 96px;
+ion-tab-bar {
+  --border: 0.5px solid var(--ck-border);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  height: 64px;
 }
-
-/* Let long checkbox labels wrap instead of being cut off */
-ion-checkbox::part(label) {
-  white-space: normal;
-}
-
-.rec-live {
-  color: var(--ion-color-danger);
+ion-tab-button {
+  --color: var(--ck-faint);
+  --color-selected: var(--ck-text);
   font-weight: 600;
+  transition: transform 0.2s ease;
+}
+ion-tab-button:active { transform: scale(0.92); }
+ion-tab-button[tab='new'] ion-icon {
+  background: var(--ck-ink);
+  color: var(--ck-on-ink);
+  border-radius: 14px;
+  padding: 7px;
+  font-size: 22px;
+  box-shadow: var(--ck-shadow);
+}
+
+/* ---------- Content ---------- */
+ion-content { --padding-bottom: 120px; }
+ion-content::part(scroll) { padding-bottom: 110px; }
+
+.page { padding: 4px 20px 0; }
+.eyebrow {
+  text-transform: uppercase;
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  color: var(--ck-muted);
+  margin: 28px 4px 12px;
+}
+.muted { color: var(--ck-muted); }
+.tabular { font-variant-numeric: tabular-nums; }
+.h1 { font-size: 30px; font-weight: 750; letter-spacing: -0.035em; line-height: 1.1; margin: 0; }
+.h2 { font-size: 22px; font-weight: 700; letter-spacing: -0.025em; margin: 0; }
+.lead { font-size: 16px; line-height: 1.5; color: var(--ck-muted); }
+
+/* ---------- Cards ---------- */
+.card {
+  background: var(--ck-bg);
+  border: 1px solid var(--ck-border);
+  border-radius: var(--ck-radius);
+  padding: 18px;
+  box-shadow: var(--ck-shadow);
+  margin-bottom: 12px;
+}
+.card.ink {
+  background: var(--ck-ink);
+  color: var(--ck-on-ink);
+  border-color: transparent;
+  box-shadow: var(--ck-shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+.card.ink .muted { color: var(--ck-ink-muted); }
+.card.ink::after {
+  /* soft light sweep */
+  content: '';
+  position: absolute;
+  inset: -40% -10% auto auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.14), transparent 70%);
+  pointer-events: none;
+}
+.card.flat { box-shadow: none; background: var(--ck-surface); border-color: transparent; }
+.card.tap { cursor: pointer; }
+
+.row { display: flex; align-items: center; gap: 14px; }
+.grow { flex: 1; min-width: 0; }
+.ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.mono {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--ck-surface);
+  color: var(--ck-text);
+  font-weight: 700;
+  font-size: 15px;
+}
+.card.ink .mono { background: rgba(255, 255, 255, 0.12); color: var(--ck-on-ink); }
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--ck-surface);
+  color: var(--ck-text);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  user-select: none;
+}
+.chip.on { background: var(--ck-ink); color: var(--ck-on-ink); }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* ---------- Buttons ---------- */
+ion-button { --border-radius: 16px; font-weight: 650; letter-spacing: -0.01em; text-transform: none; }
+ion-button[size='large'] { --padding-top: 18px; --padding-bottom: 18px; height: 56px; }
+ion-button.btn-ghost { --color: var(--ck-text); }
+
+/* ---------- Lists (inset groups) ---------- */
+ion-list.list-inset { border-radius: var(--ck-radius); background: var(--ck-surface) !important; margin: 0 0 12px; }
+ion-list.list-inset ion-item { --background: transparent; --inner-border-width: 0 0 0.5px 0; }
+ion-list-header { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ck-muted); font-weight: 650; }
+ion-checkbox::part(label) { white-space: normal; }
+ion-segment { --background: var(--ck-surface); border-radius: 12px; }
+ion-segment-button { --indicator-color: var(--ck-bg); --color-checked: var(--ck-text); font-weight: 600; }
+
+.field {
+  background: var(--ck-surface);
+  border-radius: var(--ck-radius-sm);
+  padding: 4px 16px;
+  margin-bottom: 10px;
+  transition: box-shadow 0.2s ease;
+}
+.field:focus-within { box-shadow: 0 0 0 2px var(--ck-text); }
+
+/* ---------- Help FAB ---------- */
+.help-fab { bottom: 84px !important; }
+.help-fab ion-fab-button {
+  --background: var(--ck-ink);
+  --color: var(--ck-on-ink);
+  --box-shadow: var(--ck-shadow-lg);
+  width: 58px;
+  height: 58px;
+}
+.help-fab::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  border: 2px solid var(--ck-ink);
+  animation: ck-ping 2.8s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+@keyframes ck-ping {
+  0% { transform: scale(1); opacity: 0.45; }
+  70%, 100% { transform: scale(1.6); opacity: 0; }
+}
+
+/* ---------- Skeleton shimmer ---------- */
+.skeleton {
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--ck-surface) 0%, var(--ck-surface-2) 50%, var(--ck-surface) 100%);
+  background-size: 200% 100%;
+  animation: ck-shimmer 1.4s ease-in-out infinite;
+}
+@keyframes ck-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ---------- Empty state ---------- */
+.empty { text-align: center; padding: 56px 24px; color: var(--ck-muted); }
+.empty .empty-icon {
+  width: 64px; height: 64px; border-radius: 20px; margin: 0 auto 16px;
+  display: grid; place-items: center; background: var(--ck-surface); color: var(--ck-text); font-size: 28px;
+}
+
+/* ---------- Recording (dark stage) ---------- */
+.stage-dark { --background: #000; --ion-text-color: #fafafa; color: #fafafa; }
+.stage-dark ion-toolbar { --background: #000; --color: #fafafa; }
+.timer { font-size: 64px; font-weight: 250; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  .help-fab::before, .skeleton { animation: none; }
+}
+
+/* ---------- Logo stroke drawing ---------- */
+.logo-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  animation-name: ck-draw;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  animation-fill-mode: forwards;
+}
+@keyframes ck-draw {
+  0% { stroke-dashoffset: 1; opacity: 0; }
+  10% { opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .logo-draw { animation: none; stroke-dashoffset: 0; opacity: 1; }
 }
