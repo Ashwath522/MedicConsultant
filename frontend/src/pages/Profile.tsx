@@ -1,24 +1,30 @@
 import {
-  IonButton, IonContent, IonDatetime, IonDatetimeButton, IonHeader, IonInput, IonItem, IonLabel, IonList,
-  IonListHeader, IonModal, IonPage, IonSelect, IonSelectOption, IonTitle, IonToolbar, useIonToast,
-  useIonViewWillEnter,
+  IonButton, IonContent, IonDatetime, IonDatetimeButton, IonHeader, IonIcon, IonInput, IonModal, IonPage,
+  IonTitle, IonToolbar, useIonRouter, useIonToast, useIonViewWillEnter,
 } from '@ionic/react';
+import { motion } from 'framer-motion';
+import { bedOutline, cafeOutline, chevronForward, moonOutline, peopleOutline, restaurantOutline, sunnyOutline } from 'ionicons/icons';
 import { useState } from 'react';
 import { api, Profile as P, setToken } from '../services/api';
+import { Item, Pressable, Stagger, useEnterKey } from '../ui/motion';
 
-const ROUTINE: [keyof P, string][] = [
-  ['wake_time', 'Wake up'], ['breakfast_time', 'Breakfast'], ['lunch_time', 'Lunch'],
-  ['dinner_time', 'Dinner'], ['bed_time', 'Bed time'],
+const ROUTINE: [keyof P, string, string][] = [
+  ['wake_time', 'Wake up', sunnyOutline], ['breakfast_time', 'Breakfast', cafeOutline],
+  ['lunch_time', 'Lunch', restaurantOutline], ['dinner_time', 'Dinner', moonOutline], ['bed_time', 'Bed time', bedOutline],
 ];
-
+const LANGS = [['en', 'English'], ['hi', 'Hindi'], ['kn', 'Kannada']] as const;
 const toList = (s: string) => s.split(',').map((x) => x.trim()).filter(Boolean);
+const initials = (n: string) => n.split(' ').filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('');
 
 export default function Profile() {
   const [p, setP] = useState<P | null>(null);
   const [allergies, setAllergies] = useState('');
   const [conditions, setConditions] = useState('');
   const [meds, setMeds] = useState('');
+  const [dirty, setDirty] = useState(false);
   const [toast] = useIonToast();
+  const router = useIonRouter();
+  const k = useEnterKey();
 
   useIonViewWillEnter(() => {
     api<P>('/profile').then((d) => {
@@ -26,23 +32,25 @@ export default function Profile() {
       setAllergies(d.allergies.join(', '));
       setConditions(d.chronic_conditions.join(', '));
       setMeds(d.regular_medicines.join(', '));
+      setDirty(false);
     }).catch(() => {});
   });
 
-  if (!p) return <IonPage><IonContent /></IonPage>;
-  const set = (k: keyof P, v: unknown) => setP({ ...p, [k]: v });
+  if (!p) return <IonPage><IonContent><div className="page" style={{ paddingTop: 80 }}><div className="skeleton" style={{ height: 120 }} /></div></IonContent></IonPage>;
+  const set = (key: keyof P, v: unknown) => { setP({ ...p, [key]: v }); setDirty(true); };
 
   const save = async () => {
     try {
       const body = {
         name: p.name, age: p.age, language: p.language,
         allergies: toList(allergies), chronic_conditions: toList(conditions), regular_medicines: toList(meds),
-        ...Object.fromEntries(ROUTINE.map(([k]) => [k, p[k]])),
+        ...Object.fromEntries(ROUTINE.map(([key]) => [key, p[key]])),
       };
       setP(await api<P>('/profile', { method: 'PUT', body }));
-      toast({ message: 'Profile saved', duration: 1500, color: 'success' });
+      setDirty(false);
+      toast({ message: 'Saved', duration: 1200, position: 'top' });
     } catch (e) {
-      toast({ message: (e as Error).message, duration: 2500, color: 'danger' });
+      toast({ message: (e as Error).message, duration: 2500, position: 'top' });
     }
   };
 
@@ -50,50 +58,88 @@ export default function Profile() {
 
   return (
     <IonPage>
-      <IonHeader><IonToolbar><IonTitle>Profile</IonTitle></IonToolbar></IonHeader>
+      <IonHeader translucent><IonToolbar><IonTitle>Profile</IonTitle></IonToolbar></IonHeader>
       <IonContent fullscreen>
-        <IonList inset>
-          <IonListHeader>About you</IonListHeader>
-          <IonItem><IonInput label="Name" value={p.name} onIonInput={(e) => set('name', e.detail.value ?? '')} /></IonItem>
-          <IonItem><IonInput label="Age" type="number" value={p.age ?? ''} onIonInput={(e) => set('age', e.detail.value ? Number(e.detail.value) : null)} /></IonItem>
-          <IonItem>
-            <IonSelect label="Language" value={p.language} onIonChange={(e) => set('language', e.detail.value)}>
-              <IonSelectOption value="en">English</IonSelectOption>
-              <IonSelectOption value="hi">Hindi</IonSelectOption>
-              <IonSelectOption value="kn">Kannada</IonSelectOption>
-            </IonSelect>
-          </IonItem>
-        </IonList>
+        <IonHeader collapse="condense"><IonToolbar><IonTitle size="large">Profile</IonTitle></IonToolbar></IonHeader>
 
-        <IonList inset>
-          <IonListHeader>Health profile (used for safety checks)</IonListHeader>
-          <IonItem><IonInput label="Allergies" labelPlacement="stacked" placeholder="e.g. penicillin, sulfa" value={allergies} onIonInput={(e) => setAllergies(e.detail.value ?? '')} /></IonItem>
-          <IonItem><IonInput label="Chronic conditions" labelPlacement="stacked" placeholder="e.g. BP, diabetes" value={conditions} onIonInput={(e) => setConditions(e.detail.value ?? '')} /></IonItem>
-          <IonItem><IonInput label="Regular medicines" labelPlacement="stacked" placeholder="e.g. Amlodipine 5mg" value={meds} onIonInput={(e) => setMeds(e.detail.value ?? '')} /></IonItem>
-        </IonList>
+        <Stagger k={k} className="page">
+          <Item>
+            <div className="row" style={{ margin: '4px 4px 8px' }}>
+              <motion.div
+                initial={{ scale: 0.6, rotate: -10 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 18 }}
+                style={{ width: 68, height: 68, borderRadius: 22, background: 'var(--ck-ink)', color: 'var(--ck-on-ink)', display: 'grid', placeItems: 'center', fontSize: 24, fontWeight: 700 }}
+              >
+                {initials(p.name || '?')}
+              </motion.div>
+              <div className="grow">
+                <div className="h2">{p.name}</div>
+                <div className="muted">{p.email}</div>
+              </div>
+            </div>
+          </Item>
 
-        <IonList inset>
-          <IonListHeader>Daily routine (reminders fit around this)</IonListHeader>
-          {ROUTINE.map(([k, label]) => (
-            <IonItem key={k}>
-              <IonLabel>{label}</IonLabel>
-              <IonDatetimeButton datetime={`dt-${k}`} slot="end" />
-              <IonModal keepContentsMounted>
-                <IonDatetime
-                  id={`dt-${k}`} presentation="time" hourCycle="h12"
-                  value={`2000-01-01T${p[k]}:00`}
-                  onIonChange={(e) => { const v = String(e.detail.value ?? ''); set(k, v.slice(11, 16)); }}
-                />
-              </IonModal>
-            </IonItem>
-          ))}
-        </IonList>
+          <Item><div className="eyebrow">About you</div></Item>
+          <Item>
+            <div className="field"><IonInput label="Name" labelPlacement="floating" value={p.name} onIonInput={(e) => set('name', e.detail.value ?? '')} /></div>
+            <div className="field"><IonInput label="Age" labelPlacement="floating" type="number" value={p.age ?? ''} onIonInput={(e) => set('age', e.detail.value ? Number(e.detail.value) : null)} /></div>
+            <div className="chips" style={{ margin: '6px 0 4px' }}>
+              {LANGS.map(([v, l]) => (
+                <motion.span key={v} whileTap={{ scale: 0.92 }} className={`chip ${p.language === v ? 'on' : ''}`} onClick={() => set('language', v)}>{l}</motion.span>
+              ))}
+            </div>
+          </Item>
 
-        <div className="ion-padding">
-          <IonButton expand="block" onClick={save}>Save profile</IonButton>
-          <IonButton expand="block" fill="outline" routerLink="/profile/contacts">Family & doctor contacts</IonButton>
-          <IonButton expand="block" fill="clear" color="medium" onClick={logout}>Log out</IonButton>
-        </div>
+          <Item><div className="eyebrow">Health profile · used for safety checks</div></Item>
+          <Item>
+            <div className="field"><IonInput label="Allergies" labelPlacement="floating" placeholder="penicillin, sulfa" value={allergies} onIonInput={(e) => { setAllergies(e.detail.value ?? ''); setDirty(true); }} /></div>
+            <div className="field"><IonInput label="Chronic conditions" labelPlacement="floating" placeholder="BP, diabetes" value={conditions} onIonInput={(e) => { setConditions(e.detail.value ?? ''); setDirty(true); }} /></div>
+            <div className="field"><IonInput label="Regular medicines" labelPlacement="floating" placeholder="Amlodipine 5mg" value={meds} onIonInput={(e) => { setMeds(e.detail.value ?? ''); setDirty(true); }} /></div>
+          </Item>
+
+          <Item><div className="eyebrow">Daily routine · reminders fit around this</div></Item>
+          <Item>
+            <div className="card flat" style={{ padding: '4px 16px' }}>
+              {ROUTINE.map(([key, label, icon], i) => (
+                <div key={key} className="row" style={{ padding: '10px 0', borderBottom: i < ROUTINE.length - 1 ? '0.5px solid var(--ck-border)' : 0 }}>
+                  <IonIcon icon={icon} style={{ fontSize: 20 }} />
+                  <div className="grow" style={{ fontWeight: 550 }}>{label}</div>
+                  <IonDatetimeButton datetime={`dt-${key}`} />
+                  <IonModal keepContentsMounted>
+                    <IonDatetime id={`dt-${key}`} presentation="time" hourCycle="h12" value={`2000-01-01T${p[key]}:00`}
+                      onIonChange={(e) => set(key, String(e.detail.value ?? '').slice(11, 16))} />
+                  </IonModal>
+                </div>
+              ))}
+            </div>
+          </Item>
+
+          <Item>
+            <Pressable className="card tap" style={{ marginTop: 20 }} onClick={() => router.push('/profile/contacts')}>
+              <div className="row">
+                <div className="mono"><IonIcon icon={peopleOutline} /></div>
+                <div className="grow">
+                  <div style={{ fontWeight: 650 }}>Family & doctor</div>
+                  <div className="muted" style={{ fontSize: 14 }}>One-tap help contacts</div>
+                </div>
+                <IonIcon icon={chevronForward} style={{ color: 'var(--ck-faint)' }} />
+              </div>
+            </Pressable>
+          </Item>
+
+          <Item>
+            <IonButton expand="block" fill="clear" color="medium" onClick={logout} style={{ marginTop: 8 }}>Log out</IonButton>
+          </Item>
+        </Stagger>
+
+        {/* Floating save bar appears only when something changed */}
+        <motion.div
+          initial={false}
+          animate={{ y: dirty ? 0 : 140, opacity: dirty ? 1 : 0 }}
+          transition={{ type: 'spring', stiffness: 400, damping: 34 }}
+          style={{ position: 'fixed', left: 16, right: 16, bottom: 'calc(env(safe-area-inset-bottom) + 76px)', zIndex: 20 }}
+        >
+          <IonButton expand="block" size="large" onClick={save} style={{ boxShadow: 'var(--ck-shadow-lg)', borderRadius: 16 }}>Save changes</IonButton>
+        </motion.div>
       </IonContent>
     </IonPage>
   );

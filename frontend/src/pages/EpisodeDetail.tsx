@@ -1,27 +1,25 @@
 import {
-  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList,
-  IonListHeader, IonNote, IonPage, IonTitle, IonToolbar, useIonAlert, useIonRouter, useIonViewWillEnter,
+  IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonPage, IonTitle, IonToolbar,
+  useIonActionSheet, useIonAlert, useIonRouter, useIonViewWillEnter,
 } from '@ionic/react';
-import { camera, checkmarkCircle, documentText, mic, notifications, pulse } from 'ionicons/icons';
+import { chevronForward, documentTextOutline, ellipsisHorizontal } from 'ionicons/icons';
 import { useState } from 'react';
 import { RouteComponentProps } from 'react-router';
 import HelpButton from '../components/HelpButton';
 import { api, Consultation, Episode, fmtTime } from '../services/api';
+import { Item, monogram, Pressable, Stagger, useEnterKey } from '../ui/motion';
+import Stepper, { Step } from '../ui/Stepper';
 
-// Workflow steps not built yet — enabled in later weeks.
-const UPCOMING = [
-  { icon: camera, title: 'Scan prescription', note: 'Week 5–6: OCR + medicine matching' },
-  { icon: checkmarkCircle, title: 'Verify', note: 'Week 7: consultation vs prescription checks' },
-  { icon: notifications, title: 'Care plan & reminders', note: 'Week 8' },
-  { icon: pulse, title: 'Daily check-in', note: 'Week 9: symptoms + sleep' },
-];
+const daysSince = (d: string) => Math.max(1, Math.floor((Date.now() - new Date(d).getTime()) / 86_400_000) + 1);
 
 export default function EpisodeDetail({ match }: RouteComponentProps<{ id: string }>) {
   const id = match.params.id;
   const [ep, setEp] = useState<Episode | null>(null);
   const [consults, setConsults] = useState<Consultation[]>([]);
   const [alert] = useIonAlert();
+  const [sheet] = useIonActionSheet();
   const router = useIonRouter();
+  const k = useEnterKey();
 
   useIonViewWillEnter(() => {
     api<Episode>(`/episodes/${id}`).then(setEp).catch(() => {});
@@ -48,57 +46,86 @@ export default function EpisodeDetail({ match }: RouteComponentProps<{ id: strin
       ],
     });
 
+  const more = () =>
+    sheet({
+      buttons: [
+        ...(ep?.status === 'active' ? [{ text: 'Close episode', handler: close }] : []),
+        { text: 'Delete episode', role: 'destructive', handler: remove },
+        { text: 'Cancel', role: 'cancel' },
+      ],
+    });
+
+  const active = ep?.status === 'active';
+  const recorded = consults.length > 0;
+  const steps: Step[] = [
+    { title: 'Episode created', note: ep ? new Date(ep.start_date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }) : '', state: 'done' },
+    {
+      title: 'Record consultation',
+      note: recorded ? `${consults.length} recorded · tap to add another` : 'Capture what the doctor says',
+      state: recorded ? 'done' : 'current',
+      onClick: active ? () => router.push(`/episodes/${id}/record`) : undefined,
+    },
+    { title: 'Scan prescription', note: 'Read & match medicines', state: recorded ? 'current' : 'todo' },
+    { title: 'Verify', note: 'Consultation vs prescription', state: 'todo' },
+    { title: 'Care plan', note: 'Reminders around your routine', state: 'todo' },
+    { title: 'Recover', note: 'Daily check-ins, sleep, follow-ups', state: 'todo' },
+  ];
+
   return (
     <IonPage>
-      <IonHeader>
+      <IonHeader translucent>
         <IonToolbar>
-          <IonButtons slot="start"><IonBackButton defaultHref="/episodes" /></IonButtons>
-          <IonTitle>{ep?.category ?? 'Episode'}</IonTitle>
+          <IonButtons slot="start"><IonBackButton defaultHref="/episodes" text="" /></IonButtons>
+          <IonTitle>{ep?.category ?? ''}</IonTitle>
+          <IonButtons slot="end"><IonButton onClick={more}><IonIcon icon={ellipsisHorizontal} /></IonButton></IonButtons>
         </IonToolbar>
       </IonHeader>
-      <IonContent fullscreen className="ion-padding">
+      <IonContent fullscreen>
         {ep && (
-          <>
-            <h2>{ep.title}</h2>
-            <p className="muted">Started {new Date(ep.start_date).toLocaleDateString()} · {ep.status}</p>
-            {ep.issue_description && <p>{ep.issue_description}</p>}
+          <Stagger k={k} className="page" >
+            <Item>
+              <div className="card ink" style={{ marginTop: 8 }}>
+                <div className="row">
+                  <div className="mono">{monogram(ep.category)}</div>
+                  <div className="grow">
+                    <div className="muted" style={{ fontSize: 13, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                      {active ? `Day ${daysSince(ep.start_date)}` : 'Closed'} · {ep.category}
+                    </div>
+                    <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: '-0.02em', marginTop: 2 }}>{ep.title}</div>
+                  </div>
+                </div>
+                {ep.issue_description && <p className="muted" style={{ margin: '14px 0 0', lineHeight: 1.5 }}>"{ep.issue_description}"</p>}
+              </div>
+            </Item>
 
-            {ep.status === 'active' && (
-              <IonButton expand="block" routerLink={`/episodes/${id}/record`}>
-                <IonIcon icon={mic} slot="start" />Record consultation
-              </IonButton>
+            <Item><div className="eyebrow">Your path</div></Item>
+            <Item>
+              <div className="card"><Stepper steps={steps} k={k} /></div>
+            </Item>
+
+            {recorded && (
+              <>
+                <Item><div className="eyebrow">Consultations</div></Item>
+                {consults.map((c) => (
+                  <Item key={c.id}>
+                    <Pressable className="card tap" onClick={() => router.push(`/consultations/${c.id}`)}>
+                      <div className="row">
+                        <div className="mono"><IonIcon icon={documentTextOutline} /></div>
+                        <div className="grow">
+                          <div style={{ fontWeight: 650 }}>
+                            {new Date(c.recorded_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}
+                            <span className="muted tabular" style={{ fontWeight: 500 }}> · {fmtTime(c.duration_sec)}</span>
+                          </div>
+                          <div className="muted ellipsis" style={{ fontSize: 14 }}>{c.transcript[0]?.text ?? 'No speech detected'}</div>
+                        </div>
+                        <IonIcon icon={chevronForward} style={{ color: 'var(--ck-faint)' }} />
+                      </div>
+                    </Pressable>
+                  </Item>
+                ))}
+              </>
             )}
-
-            <IonList inset>
-              <IonListHeader>Consultations</IonListHeader>
-              {consults.length === 0 && (
-                <IonItem><IonLabel className="muted">None yet. Record one at your doctor's visit.</IonLabel></IonItem>
-              )}
-              {consults.map((c) => (
-                <IonItem key={c.id} routerLink={`/consultations/${c.id}`} detail>
-                  <IonIcon icon={documentText} slot="start" />
-                  <IonLabel>
-                    <h3>{new Date(c.recorded_at).toLocaleString()}</h3>
-                    <p>{c.transcript[0]?.text ?? 'No speech detected'}</p>
-                  </IonLabel>
-                  <IonNote slot="end">{fmtTime(c.duration_sec)}</IonNote>
-                </IonItem>
-              ))}
-            </IonList>
-
-            <IonList inset>
-              <IonListHeader>Coming next</IonListHeader>
-              {UPCOMING.map((s) => (
-                <IonItem key={s.title} disabled>
-                  <IonIcon icon={s.icon} slot="start" />
-                  <IonLabel><h3>{s.title}</h3><p>{s.note}</p></IonLabel>
-                </IonItem>
-              ))}
-            </IonList>
-
-            {ep.status === 'active' && <IonButton expand="block" fill="outline" onClick={close}>Close episode</IonButton>}
-            <IonButton expand="block" fill="clear" color="danger" onClick={remove}>Delete episode</IonButton>
-          </>
+          </Stagger>
         )}
         <HelpButton />
       </IonContent>

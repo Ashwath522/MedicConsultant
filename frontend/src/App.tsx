@@ -2,7 +2,8 @@ import {
   IonApp, IonIcon, IonLabel, IonRouterOutlet, IonTabBar, IonTabButton, IonTabs, setupIonicReact,
 } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
-import { addCircle, home, list, person, pulse } from 'ionicons/icons';
+import { MotionConfig } from 'framer-motion';
+import { add, home, layers, person, pulse } from 'ionicons/icons';
 import { Redirect, Route } from 'react-router-dom';
 
 import '@ionic/react/css/core.css';
@@ -46,9 +47,9 @@ const Tabs = () => (
     </IonRouterOutlet>
     <IonTabBar slot="bottom">
       <IonTabButton tab="home" href="/home"><IonIcon icon={home} /><IonLabel>Home</IonLabel></IonTabButton>
-      <IonTabButton tab="episodes" href="/episodes"><IonIcon icon={list} /><IonLabel>Episodes</IonLabel></IonTabButton>
-      <IonTabButton tab="new" href="/new"><IonIcon icon={addCircle} /><IonLabel>Add</IonLabel></IonTabButton>
-      <IonTabButton tab="timeline" href="/timeline"><IonIcon icon={pulse} /><IonLabel>Timeline</IonLabel></IonTabButton>
+      <IonTabButton tab="episodes" href="/episodes"><IonIcon icon={layers} /><IonLabel>Episodes</IonLabel></IonTabButton>
+      <IonTabButton tab="new" href="/new"><IonIcon icon={add} /><IonLabel>New</IonLabel></IonTabButton>
+      <IonTabButton tab="timeline" href="/timeline"><IonIcon icon={pulse} /><IonLabel>Recovery</IonLabel></IonTabButton>
       <IonTabButton tab="profile" href="/profile"><IonIcon icon={person} /><IonLabel>Profile</IonLabel></IonTabButton>
     </IonTabBar>
   </IonTabs>
@@ -56,13 +57,15 @@ const Tabs = () => (
 
 export default function App() {
   return (
-    <IonApp>
-      <IonReactRouter>
-        <IonRouterOutlet>
-          <Route exact path="/login" component={Login} />
-          <Route render={() => (getToken() ? <Tabs /> : <Redirect to="/login" />)} />
-        </IonRouterOutlet>
-      </IonReactRouter>
-    </IonApp>
+    <MotionConfig reducedMotion="user">
+      <IonApp>
+        <IonReactRouter>
+          <IonRouterOutlet>
+            <Route exact path="/login" component={Login} />
+            <Route render={() => (getToken() ? <Tabs /> : <Redirect to="/login" />)} />
+          </IonRouterOutlet>
+        </IonReactRouter>
+      </IonApp>
+    </MotionConfig>
   );
 }
