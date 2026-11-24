@@ -9,7 +9,9 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import audit, current_user
-from app.models import NightlyVitals, User
+from app.models import DailyLog, NightlyVitals, User
+from app.signals import trends as trends_mod
+from app.wellness.targets import sleep_hours as sleep_target_for, steps as steps_goal_for
 from app.signals.engine import BENIGN_TAGS, Night, evaluate
 from app.signals.simulate import demo_nights
 
@@ -132,3 +134,17 @@ def load_demo(user: User = Depends(current_user), db: Session = Depends(get_db))
                              resp=n.resp, steps=n.steps, sleep_h=n.sleep_h, tags=[], source="demo"))
     db.commit()
     return {"loaded": 60}
+
+
+@router.get("/trends")
+def get_trends(days: int = 30, user: User = Depends(current_user), db: Session = Depends(get_db)):
+    """Every metric over 7/30/90 days, with daily Recovery/Sleep/Activity scores and patterns."""
+    if days not in (7, 30, 90):
+        raise HTTPException(422, "days must be 7, 30 or 90")
+    since = date.today() - timedelta(days=2 * days + 30)
+    vit = {r.day: {f: getattr(r, f) for f in FIELDS} for r in db.scalars(
+        select(NightlyVitals).where(NightlyVitals.user_id == user.id, NightlyVitals.day >= since))}
+    logs = {r.day: {"water_ml": r.water_ml, "steps": r.steps, "sleep_hours": r.sleep_hours, "mood": r.mood} for r in db.scalars(
+        select(DailyLog).where(DailyLog.user_id == user.id, DailyLog.day >= since))}
+    age = user.age or 30
+    return trends_mod.build(days, date.today(), vit, logs, sleep_target_for(age)[0], steps_goal_for(age, user.activity or "light"))

@@ -68,7 +68,7 @@ export default function Home() {
             <Item>
               <div className="row" style={{ margin: '0 4px 10px', justifyContent: 'space-between' }}>
                 <div className="eyebrow" style={{ margin: 0 }}>Today's health</div>
-                <span className="chip" onClick={() => router.push('/blueprint')}>My blueprint</span>
+                <div className="row" style={{ gap: 6 }}><span className="chip" onClick={() => router.push('/trends')}>Trends</span><span className="chip" onClick={() => router.push('/blueprint')}>My blueprint</span></div>
               </div>
               <TodayTracker bp={bp} log={log} setLog={setLog} k={k} />
             </Item>

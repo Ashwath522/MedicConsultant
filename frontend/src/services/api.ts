@@ -95,3 +95,14 @@ export interface Signals {
   latest?: { rhr: number | null; hrv: number | null; temp_dev: number | null; temp_abs: number | null; resp: number | null; steps: number | null };
   series: SignalPoint[];
 }
+
+export interface MetricSummary {
+  label: string; unit: string; higher_is_better: boolean | null; decimals: number; chart: 'line' | 'bar';
+  latest: number; avg: number; min: number; max: number; change: number | null; change_pct: number | null;
+  band: [number, number] | null; count: number;
+}
+export type TrendRow = { day: string } & Record<string, number | null | string>;
+export interface Trends {
+  days: number; series: TrendRow[]; summary: Record<string, MetricSummary>;
+  patterns: { title: string; detail: string; good: boolean }[];
+}
