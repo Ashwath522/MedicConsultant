@@ -11,6 +11,8 @@ import '@ionic/react/css/structure.css';
 import '@ionic/react/css/typography.css';
 import '@ionic/react/css/padding.css';
 import '@ionic/react/css/flex-utils.css';
+import '@ionic/react/css/text-alignment.css';
+import '@ionic/react/css/display.css';
 import './theme.css';
 
 import { getToken } from './services/api';
@@ -20,6 +22,8 @@ import Episodes from './pages/Episodes';
 import NewEpisode from './pages/NewEpisode';
 import EpisodeDetail from './pages/EpisodeDetail';
 import Timeline from './pages/Timeline';
+import RecordConsultation from './pages/RecordConsultation';
+import ConsultationView from './pages/ConsultationView';
 import Profile from './pages/Profile';
 import Contacts from './pages/Contacts';
 
@@ -32,6 +36,8 @@ const Tabs = () => (
       <Route exact path="/home" component={Home} />
       <Route exact path="/episodes" component={Episodes} />
       <Route exact path="/episodes/:id" component={EpisodeDetail} />
+      <Route exact path="/episodes/:id/record" component={RecordConsultation} />
+      <Route exact path="/consultations/:id" component={ConsultationView} />
       <Route exact path="/new" component={NewEpisode} />
       <Route exact path="/timeline" component={Timeline} />
       <Route exact path="/profile" component={Profile} />

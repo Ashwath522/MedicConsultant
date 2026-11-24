@@ -26,3 +26,13 @@
 ion-content::part(scroll) {
   padding-bottom: 96px;
 }
+
+/* Let long checkbox labels wrap instead of being cut off */
+ion-checkbox::part(label) {
+  white-space: normal;
+}
+
+.rec-live {
+  color: var(--ion-color-danger);
+  font-weight: 600;
+}

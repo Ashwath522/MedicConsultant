@@ -1,16 +1,15 @@
 import {
   IonBackButton, IonButton, IonButtons, IonContent, IonHeader, IonIcon, IonItem, IonLabel, IonList,
-  IonListHeader, IonPage, IonTitle, IonToolbar, useIonAlert, useIonRouter, useIonViewWillEnter,
+  IonListHeader, IonNote, IonPage, IonTitle, IonToolbar, useIonAlert, useIonRouter, useIonViewWillEnter,
 } from '@ionic/react';
-import { camera, checkmarkCircle, mic, notifications, pulse } from 'ionicons/icons';
+import { camera, checkmarkCircle, documentText, mic, notifications, pulse } from 'ionicons/icons';
 import { useState } from 'react';
 import { RouteComponentProps } from 'react-router';
 import HelpButton from '../components/HelpButton';
-import { api, Episode } from '../services/api';
+import { api, Consultation, Episode, fmtTime } from '../services/api';
 
-// Next steps of the workflow — each becomes live in later weeks.
-const STEPS = [
-  { icon: mic, title: 'Record consultation', note: 'Week 3–4: transcript + AI summary' },
+// Workflow steps not built yet — enabled in later weeks.
+const UPCOMING = [
   { icon: camera, title: 'Scan prescription', note: 'Week 5–6: OCR + medicine matching' },
   { icon: checkmarkCircle, title: 'Verify', note: 'Week 7: consultation vs prescription checks' },
   { icon: notifications, title: 'Care plan & reminders', note: 'Week 8' },
@@ -18,12 +17,15 @@ const STEPS = [
 ];
 
 export default function EpisodeDetail({ match }: RouteComponentProps<{ id: string }>) {
+  const id = match.params.id;
   const [ep, setEp] = useState<Episode | null>(null);
+  const [consults, setConsults] = useState<Consultation[]>([]);
   const [alert] = useIonAlert();
   const router = useIonRouter();
 
   useIonViewWillEnter(() => {
-    api<Episode>(`/episodes/${match.params.id}`).then(setEp).catch(() => {});
+    api<Episode>(`/episodes/${id}`).then(setEp).catch(() => {});
+    api<Consultation[]>(`/episodes/${id}/consultations`).then(setConsults).catch(() => {});
   });
 
   const close = () =>
@@ -32,17 +34,17 @@ export default function EpisodeDetail({ match }: RouteComponentProps<{ id: strin
       message: 'Close this episode and move it to your health history?',
       buttons: [
         { text: 'Not yet', role: 'cancel' },
-        { text: 'Close episode', handler: async () => { setEp(await api<Episode>(`/episodes/${match.params.id}/close`, { method: 'PATCH' })); } },
+        { text: 'Close episode', handler: async () => { setEp(await api<Episode>(`/episodes/${id}/close`, { method: 'PATCH' })); } },
       ],
     });
 
   const remove = () =>
     alert({
       header: 'Delete episode?',
-      message: 'This permanently deletes this episode and its data.',
+      message: 'This permanently deletes this episode and all its consultations.',
       buttons: [
         { text: 'Cancel', role: 'cancel' },
-        { text: 'Delete', role: 'destructive', handler: async () => { await api(`/episodes/${match.params.id}`, { method: 'DELETE' }); router.push('/episodes', 'back', 'pop'); } },
+        { text: 'Delete', role: 'destructive', handler: async () => { await api(`/episodes/${id}`, { method: 'DELETE' }); router.push('/episodes', 'back', 'pop'); } },
       ],
     });
 
@@ -61,9 +63,32 @@ export default function EpisodeDetail({ match }: RouteComponentProps<{ id: strin
             <p className="muted">Started {new Date(ep.start_date).toLocaleDateString()} · {ep.status}</p>
             {ep.issue_description && <p>{ep.issue_description}</p>}
 
+            {ep.status === 'active' && (
+              <IonButton expand="block" routerLink={`/episodes/${id}/record`}>
+                <IonIcon icon={mic} slot="start" />Record consultation
+              </IonButton>
+            )}
+
             <IonList inset>
-              <IonListHeader>Next steps</IonListHeader>
-              {STEPS.map((s) => (
+              <IonListHeader>Consultations</IonListHeader>
+              {consults.length === 0 && (
+                <IonItem><IonLabel className="muted">None yet. Record one at your doctor's visit.</IonLabel></IonItem>
+              )}
+              {consults.map((c) => (
+                <IonItem key={c.id} routerLink={`/consultations/${c.id}`} detail>
+                  <IonIcon icon={documentText} slot="start" />
+                  <IonLabel>
+                    <h3>{new Date(c.recorded_at).toLocaleString()}</h3>
+                    <p>{c.transcript[0]?.text ?? 'No speech detected'}</p>
+                  </IonLabel>
+                  <IonNote slot="end">{fmtTime(c.duration_sec)}</IonNote>
+                </IonItem>
+              ))}
+            </IonList>
+
+            <IonList inset>
+              <IonListHeader>Coming next</IonListHeader>
+              {UPCOMING.map((s) => (
                 <IonItem key={s.title} disabled>
                   <IonIcon icon={s.icon} slot="start" />
                   <IonLabel><h3>{s.title}</h3><p>{s.note}</p></IonLabel>

@@ -18,3 +18,6 @@ frontend/.env
 # Never commit real patient data
 data/private/
 .pytest_cache/
+
+# Recordings kept only when KEEP_AUDIO=true
+backend/storage/
