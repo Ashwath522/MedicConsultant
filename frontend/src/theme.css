@@ -1,0 +1,28 @@
+:root {
+  --ion-color-primary: #0b7a75;
+  --ion-color-primary-rgb: 11, 122, 117;
+  --ion-color-primary-contrast: #ffffff;
+  --ion-color-primary-shade: #0a6b67;
+  --ion-color-primary-tint: #238783;
+}
+
+.help-fab ion-fab-button {
+  --background: #d6453d;
+  --background-activated: #b93a33;
+}
+
+.empty {
+  text-align: center;
+  color: var(--ion-color-medium);
+  padding: 48px 24px;
+}
+
+.muted {
+  color: var(--ion-color-medium);
+  font-size: 0.9em;
+}
+
+/* Keep the floating Help button from covering the last item on a page */
+ion-content::part(scroll) {
+  padding-bottom: 96px;
+}

@@ -1,0 +1,20 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+backend/.env
+*.db
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# OS / IDE
+.DS_Store
+.vscode/
+.idea/
+
+# Never commit real patient data
+data/private/
+.pytest_cache/
