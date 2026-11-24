@@ -9,6 +9,9 @@ Weights are renormalised when a signal is missing. Needs ≥ 14 nights of baseli
 Sleep score (0–100): 70 % duration vs your age-based target + 30 % regularity
 (1 − SD of the last 7 nights' duration / 1.5 h, clamped 0..1).
 
+Cardio fitness (estimated VO2max, ml/kg/min): Uth et al., Eur J Appl Physiol 2004:
+    VO2max ≈ 15.3 × HRmax / RHR,  HRmax = 208 − 0.7 × age  (Tanaka et al., JACC 2001). An estimate, ±10–15 %.
+
 Activity score (0–100): steps / your step goal (capped at 100). (Bevel-style "strain" needs
 workout heart rate, which we don't collect yet.)
 """
@@ -24,6 +27,7 @@ METRICS = {
     "sleep_score": ("Sleep score", "%", True, 0, "bar"),
     "activity": ("Activity", "%", True, 0, "bar"),
     "rhr": ("Resting heart rate", "bpm", False, 0, "line"),
+    "vo2max": ("Cardio fitness (est. VO₂max)", "ml/kg/min", True, 1, "line"),
     "hrv": ("Heart rate variability", "ms", True, 0, "line"),
     "sleep_h": ("Sleep", "h", True, 1, "bar"),
     "steps": ("Steps", "", True, 0, "bar"),
@@ -65,10 +69,10 @@ def sleep_score(last7: list[float], sleep_target: float) -> int | None:
     return round(100 * (0.7 * dur + 0.3 * reg))
 
 
-def build(days: int, today: date, vitals: dict[date, dict], logs: dict[date, dict], sleep_target: float, step_goal: int) -> dict:
+def build(days: int, today: date, vitals: dict[date, dict], logs: dict[date, dict], sleep_target: float, step_goal: int, age: int = 30) -> dict:
     """vitals/logs: per-day dicts. Returns per-day series + per-metric summaries + patterns."""
     start = today - timedelta(days=days - 1)
-    look = today - timedelta(days=days + 28)  # extra history for baselines
+    look = today - timedelta(days=max(days, 90) + 28)  # extra history for baselines + 90-day calendar
     all_days = [look + timedelta(days=i) for i in range((today - look).days + 1)]
 
     rows = []
@@ -93,6 +97,7 @@ def build(days: int, today: date, vitals: dict[date, dict], logs: dict[date, dic
         last7 = [x["sleep_h"] for x in rows[max(0, i - 6):i + 1] if x["sleep_h"] is not None]
         r["sleep_score"] = sleep_score(last7, sleep_target) if r["sleep_h"] is not None else None
         r["activity"] = min(100, round(100 * r["steps"] / step_goal)) if r["steps"] is not None and step_goal else None
+        r["vo2max"] = round(15.3 * (208 - 0.7 * age) / r["rhr"], 1) if r["rhr"] else None
 
     shown = [r for r in rows if r["day"] >= start]
     prev = [r for r in rows if start - timedelta(days=days) <= r["day"] < start]
@@ -120,7 +125,45 @@ def build(days: int, today: date, vitals: dict[date, dict], logs: dict[date, dic
         }
 
     series = [{**{k: r[k] for k in METRICS}, "day": r["day"].isoformat()} for r in shown]
-    return {"days": days, "series": series, "summary": summary, "patterns": patterns(rows[-90:], sleep_target)}
+
+    # weekday averages (Mon..Sun) over the shown period
+    weekdays = {}
+    for k in ("rhr", "recovery", "sleep_h", "steps"):
+        vals = []
+        for wd in range(7):
+            xs = [r[k] for r in shown if r[k] is not None and r["day"].weekday() == wd]
+            vals.append(round(mean(xs), 1) if xs else None)
+        if any(v is not None for v in vals):
+            weekdays[k] = vals
+
+    # HRV vs resting HR (same nights), with Pearson r
+    pairs = [(r["rhr"], r["hrv"]) for r in shown if r["rhr"] is not None and r["hrv"]]
+    corr = None
+    if len(pairs) >= 7:
+        xs, ys = [p[0] for p in pairs], [p[1] for p in pairs]
+        mx, my = mean(xs), mean(ys)
+        num = sum((a - mx) * (b - my) for a, b in pairs)
+        den = math.sqrt(sum((a - mx) ** 2 for a in xs) * sum((b - my) ** 2 for b in ys))
+        corr = round(num / den, 2) if den else None
+
+    # 90-day calendar of recovery + body-signal level (engine)
+    from app.signals.engine import Night, evaluate
+    night_list = [Night(day=d, rhr=v.get("rhr"), hrv=v.get("hrv"), hrv_type=v.get("hrv_type"), temp_dev=v.get("temp_dev"),
+                        temp_abs=v.get("temp_abs"), resp=v.get("resp"), steps=v.get("steps"), sleep_h=v.get("sleep_h"))
+                  for d, v in sorted(vitals.items()) if v.get("rhr") is not None or v.get("temp_abs") is not None]
+    levels = {r.day: r.level for r in evaluate(night_list)} if night_list else {}
+    by_day = {r["day"]: r for r in rows}
+    cal = []
+    for i in range(90):
+        d = today - timedelta(days=89 - i)
+        r = by_day.get(d)
+        cal.append({"day": d.isoformat(), "recovery": r["recovery"] if r else None, "level": levels.get(d)})
+
+    return {
+        "days": days, "series": series, "summary": summary, "patterns": patterns(rows[-90:], sleep_target),
+        "weekdays": weekdays, "scatter": {"points": [{"rhr": a, "hrv": b} for a, b in pairs], "r": corr},
+        "calendar": cal, "goals": {"sleep_h": sleep_target, "steps": step_goal},
+    }
 
 
 def _avg(xs):

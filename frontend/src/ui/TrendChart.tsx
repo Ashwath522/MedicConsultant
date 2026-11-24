@@ -6,7 +6,7 @@ const fmt = (v: number, d: number) => (d === 0 ? Math.round(v).toLocaleString() 
 const short = (iso: string) => new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
 
 /** Line (with personal normal band) or bar chart. Drag / tap to read any day. */
-export default function TrendChart({ rows, k, m, height = 120 }: { rows: TrendRow[]; k: string; m: MetricSummary; height?: number }) {
+export default function TrendChart({ rows, k, m, height = 120, goal }: { rows: TrendRow[]; k: string; m: MetricSummary; height?: number; goal?: number }) {
   const [sel, setSel] = useState<number | null>(null);
   const ref = useRef<SVGSVGElement>(null);
   const W = 320, H = height, P = 6;
@@ -15,7 +15,7 @@ export default function TrendChart({ rows, k, m, height = 120 }: { rows: TrendRo
   if (present.length < 2) return <div className="muted" style={{ fontSize: 13, padding: '16px 0' }}>Not enough data yet.</div>;
 
   const lo0 = Math.min(...present, ...(m.band ? [m.band[0]] : []));
-  const hi0 = Math.max(...present, ...(m.band ? [m.band[1]] : []));
+  const hi0 = Math.max(...present, ...(m.band ? [m.band[1]] : []), ...(goal ? [goal] : []));
   const pad = (hi0 - lo0) * 0.15 || 1;
   const lo = m.chart === 'bar' ? 0 : lo0 - pad, hi = hi0 + pad;
   const n = rows.length;
@@ -53,6 +53,12 @@ export default function TrendChart({ rows, k, m, height = 120 }: { rows: TrendRo
           <rect x={P} width={W - 2 * P} y={y(m.band[1])} height={Math.max(1, y(m.band[0]) - y(m.band[1]))} fill="currentColor" opacity={0.07} rx={4} />
         )}
         <line x1={P} x2={W - P} y1={y(m.avg)} y2={y(m.avg)} stroke="currentColor" strokeOpacity={0.25} strokeDasharray="3 4" />
+        {goal != null && (
+          <>
+            <line x1={P} x2={W - P} y1={y(goal)} y2={y(goal)} stroke="currentColor" strokeWidth={1.5} />
+            <text x={W - P} y={y(goal) - 4} fontSize="9" fontWeight="700" fill="currentColor" textAnchor="end">GOAL {goal.toLocaleString()}</text>
+          </>
+        )}
         {m.chart === 'bar'
           ? vals.map((v, i) => v == null ? null : (
               <motion.rect key={i} x={x(i) - bw / 2} width={bw} rx={bw / 2.5}

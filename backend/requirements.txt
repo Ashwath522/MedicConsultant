@@ -10,3 +10,4 @@ python-multipart==0.0.19
 pytest==8.3.4
 faster-whisper==1.2.1
 av>=15,<19  # av 19 breaks faster-whisper 1.2.1 decoding
+pdfplumber==0.11.4

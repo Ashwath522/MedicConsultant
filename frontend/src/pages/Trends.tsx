@@ -8,10 +8,14 @@ import { api, MetricSummary, Trends as T } from '../services/api';
 import { Item, Stagger, useEnterKey } from '../ui/motion';
 import ScoreRing from '../ui/ScoreRing';
 import TrendChart from '../ui/TrendChart';
+import CalendarHeatmap from '../ui/CalendarHeatmap';
+import WeekdayBars from '../ui/WeekdayBars';
+import Scatter from '../ui/Scatter';
+import { Ambient, EcgLine, Ticker } from '../ui/ambient';
 
 const GROUPS: [string, string[]][] = [
   ['Recovery', ['recovery']],
-  ['Heart', ['rhr', 'hrv']],
+  ['Heart', ['rhr', 'hrv', 'vo2max']],
   ['Sleep', ['sleep_h', 'sleep_score']],
   ['Activity', ['steps', 'activity']],
   ['Body', ['temp_dev', 'resp', 'spo2']],
@@ -24,6 +28,7 @@ const INFO: Record<string, string> = {
   activity: 'Steps vs your daily goal. Workout strain needs workout heart rate (coming later).',
   temp_dev: 'Difference from your normal skin temperature.',
   mood: '1 = low, 4 = great.',
+  vo2max: 'Estimated from resting heart rate and age (Uth 2004). Rises as fitness improves. ±10–15 %.',
 };
 
 function Change({ m }: { m: MetricSummary }) {
@@ -82,6 +87,40 @@ export default function Trends() {
 
           {t && Object.keys(t.summary).length > 0 && (
             <Stagger k={k + days}>
+              {/* Hero overview */}
+              {(() => {
+                const rec = latest('recovery'); const avg = t.summary.recovery?.avg;
+                const diff = rec != null && avg != null ? Math.round(rec - avg) : null;
+                const stat = (key: string, label: string) => {
+                  const m = t.summary[key]; if (!m) return null;
+                  const d = m.latest - m.avg;
+                  return (
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 11, color: '#a1a1aa', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+                      <div className="tabular" style={{ fontSize: 20, fontWeight: 750 }}>{m.decimals ? m.latest.toFixed(1) : Math.round(m.latest).toLocaleString()}<span style={{ fontSize: 11, color: '#a1a1aa' }}> {m.unit}</span></div>
+                      <div style={{ fontSize: 11, color: '#a1a1aa' }}>{d >= 0 ? '+' : ''}{m.decimals ? d.toFixed(1) : Math.round(d)} vs avg</div>
+                    </div>
+                  );
+                };
+                return (
+                  <Item>
+                    <div className="card ink beam" style={{ padding: 22 }}>
+                      <Ambient tone="dark" dots={false} />
+                      <div style={{ fontSize: 12, color: '#a1a1aa', fontWeight: 650, letterSpacing: '0.08em', textTransform: 'uppercase' }}>Today's recovery</div>
+                      <div className="row" style={{ alignItems: 'baseline', gap: 10 }}>
+                        <div style={{ fontSize: 64, fontWeight: 800, letterSpacing: '-0.05em', lineHeight: 1 }}>{rec == null ? '–' : <Ticker value={rec} />}<span style={{ fontSize: 24 }}>%</span></div>
+                        {diff != null && <div style={{ fontSize: 15, fontWeight: 650 }}>{diff >= 0 ? '▲' : '▼'} {Math.abs(diff)} pts vs your {days}-day avg</div>}
+                      </div>
+                      <p style={{ color: '#d4d4d8', margin: '8px 0 16px', fontSize: 14 }}>
+                        {rec == null ? 'Needs 2 weeks of heart data to score recovery.' : rec >= 67 ? 'Well recovered. A good day to be active.' : rec >= 34 ? 'Moderately recovered. Keep the effort sensible.' : 'Low recovery. Your body may need rest. Check Signals if you feel unwell.'}
+                      </p>
+                      <div className="row" style={{ gap: 12 }}>{stat('rhr', 'Resting HR')}{stat('hrv', 'HRV')}{stat('sleep_h', 'Sleep')}</div>
+                      <div style={{ margin: '14px -22px -22px' }}><EcgLine beats={5} height={40} color="#fafafa" speed={3} /></div>
+                    </div>
+                  </Item>
+                );
+              })()}
+
               {/* Today's scores */}
               <Item>
                 <div className="card" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4, padding: '18px 8px' }}>
@@ -109,6 +148,33 @@ export default function Trends() {
                 </>
               )}
 
+              {/* Calendar */}
+              <Item><div className="eyebrow">90-day recovery calendar</div></Item>
+              <Item><div className="card"><CalendarHeatmap cal={t.calendar} /></div></Item>
+
+              {/* Weekly rhythm */}
+              {Object.keys(t.weekdays).length > 0 && (
+                <>
+                  <Item><div className="eyebrow">Your weekly rhythm</div></Item>
+                  <Item>
+                    <div className="card" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 18 }}>
+                      {t.weekdays.recovery && <WeekdayBars vals={t.weekdays.recovery} label="Recovery" unit="%" k={k + days} />}
+                      {t.weekdays.rhr && <WeekdayBars vals={t.weekdays.rhr} label="Resting HR" unit="bpm" k={k + days} />}
+                      {t.weekdays.sleep_h && <WeekdayBars vals={t.weekdays.sleep_h} label="Sleep" unit="h" decimals={1} k={k + days} />}
+                      {t.weekdays.steps && <WeekdayBars vals={t.weekdays.steps} label="Steps" unit="" k={k + days} />}
+                    </div>
+                  </Item>
+                </>
+              )}
+
+              {/* Heart connection */}
+              {t.scatter.points.length > 0 && (
+                <>
+                  <Item><div className="eyebrow">How your heart signals move together</div></Item>
+                  <Item><div className="card"><Scatter points={t.scatter.points} r={t.scatter.r} /></div></Item>
+                </>
+              )}
+
               {/* Every metric */}
               {GROUPS.map(([group, keys]) => {
                 const have = keys.filter((key) => t.summary[key]);
@@ -131,7 +197,7 @@ export default function Trends() {
                               </div>
                               <Change m={m} />
                             </div>
-                            <TrendChart rows={t.series} k={key} m={m} />
+                            <TrendChart rows={t.series} k={key} m={m} goal={key === 'sleep_h' ? t.goals.sleep_h : key === 'steps' ? t.goals.steps : undefined} />
                             {(INFO[key] || m.band) && (
                               <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
                                 {m.band && 'Shaded = your normal range. '}{INFO[key]}
